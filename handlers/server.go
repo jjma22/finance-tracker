@@ -1,0 +1,91 @@
+package handlers
+
+import (
+	"encoding/json"
+	"log"
+	"net/http"
+
+	"main.go/data"
+	"main.go/service"
+)
+
+type financeServer struct {
+	l *log.Logger
+}
+
+func FinanceNewServer(l *log.Logger) *financeServer{
+	return &financeServer{l}
+}
+
+func (f*financeServer) ServeHTTP(rw http.ResponseWriter, r*http.Request) {
+	// refactor so cpature is case insensitive
+	if r.Method == http.MethodGet && r.URL.Path == "/monthlybudget"{
+		f.GetBudget(rw, r)
+		return
+
+	}
+
+	if r.Method == http.MethodPut && r.URL.Path == "/monthlybudget"{
+		f.UpdateBudget(rw, r)
+		return
+	}
+
+	if r.Method == http.MethodPost && r.URL.Path == "/expense"{
+		f.AddExpense(rw, r)
+		return
+	}
+}
+
+
+func (f*financeServer) GetBudget(rw http.ResponseWriter, r*http.Request) {
+	mb, err := service.GetBudget()
+
+	if err != nil {
+		f.l.Println("Error calling data.GetBudget")
+		http.Error(rw, "Unable to get monthly budget", http.StatusInternalServerError)
+	}
+
+	d, err := json.Marshal(mb)
+	if err != nil {
+		f.l.Println("Unable to marhshal budget")
+		http.Error(rw, "Unable to get monthly budget", http.StatusInternalServerError)
+	}
+
+	f.l.Println("Returning current budget")
+	rw.Write(d)
+
+}
+
+func (f*financeServer) UpdateBudget(rw http.ResponseWriter, r*http.Request) {
+	var mb data.Budget
+	f.l.Println("Updating budget")
+	err := json.NewDecoder(r.Body).Decode(&mb)
+	if err != nil {
+		f.l.Println(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = data.UpdateBudget(mb.Budget)
+
+	if err != nil {
+		f.l.Println(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	f.l.Println("Budget updated")
+	
+
+}
+
+ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
+	var ne data.Expense
+	f.l.Println("Adding new expense")
+	err := json.NewDecoder(r.Body).Decode(&ne)
+	if err != nil {
+		f.l.Println(err)
+		http.Error(rw, "Unable to unmarshall json", http.StatusInternalServerError)
+	}
+	f.l.Println(ne)
+	err = data.NewExpense(&ne)
+
+ }
