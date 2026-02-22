@@ -1,6 +1,10 @@
 package data
 
-import "errors"
+import (
+	"errors"
+	"slices"
+
+)
 
 type Expense struct {
 	ID    int
@@ -11,6 +15,12 @@ type Expense struct {
 }
 
 type Expenses []*Expense
+
+//Simply func but easier to rewrite
+//once database is added
+func GetExpenses() Expenses{
+	return MonthlyExpenses
+}
 
 func NewExpense(e *Expense) error {
 
@@ -25,6 +35,11 @@ func NewExpense(e *Expense) error {
 
 
 	e.ID = (len(MonthlyExpenses) + 1)
+
+	//
+	if e.SearchFields("Name", e.Name) != nil {
+		return errors.New("Item Name already exists in expenses")
+	}
 	// Could add some verification on data format
 	MonthlyExpenses = append(MonthlyExpenses, e)
 	return nil
@@ -33,15 +48,24 @@ func NewExpense(e *Expense) error {
 var MonthlyExpenses = Expenses{}
 
 // Module to search if field value already exisits
-func Expenses SearchFields(f string, v any) bool, err {
-
+// This will need rewriting when applicaiton uses database
+func (Expense) SearchFields(f string, v any) (error) {
+	// Create array of values from specific field
 	var currentValues []any
 	for _, expense := range MonthlyExpenses {
-		currentValues = append(currentNames, expense.f)
+		switch f{
+		case "Name":
+			currentValues = append(currentValues, expense.Name)
+		default:
+			return errors.New("Invalid field")
+
+		}
 	}
 
-	if currentValues.Contains(v) {
-		return true
+	// return error if slice contains values
+	if slices.Contains(currentValues, v) {
+		return errors.New("Value already exists in dataset")
+	} else {
+		return nil
 	}
-	retur false
 }

@@ -30,6 +30,11 @@ func (f*financeServer) ServeHTTP(rw http.ResponseWriter, r*http.Request) {
 		return
 	}
 
+	if r.Method == http.MethodGet && r.URL.Path == "/expense"{
+		f.GetExpenses(rw, r)
+		return
+	}
+
 	if r.Method == http.MethodPost && r.URL.Path == "/expense"{
 		f.AddExpense(rw, r)
 		return
@@ -77,7 +82,21 @@ func (f*financeServer) UpdateBudget(rw http.ResponseWriter, r*http.Request) {
 
 }
 
- func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
+func (f*financeServer) GetExpenses(rw http.ResponseWriter, r*http.Request) {
+	f.l.Println("Getting expenses")
+	ge := data.GetExpenses()
+	resp, err := json.Marshal(ge)
+	if err != nil {
+		f.l.Printf("Error getting expenses %s", err)
+		http.Error(rw, "Unable to retive expenses", http.StatusInternalServerError)
+	}
+	rw.Write(resp)
+
+
+}
+
+func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
+	// Read body with expense into ne
 	var ne data.Expense
 	f.l.Println("Adding new expense")
 	err := json.NewDecoder(r.Body).Decode(&ne)
@@ -86,6 +105,13 @@ func (f*financeServer) UpdateBudget(rw http.ResponseWriter, r*http.Request) {
 		http.Error(rw, "Unable to unmarshall json", http.StatusInternalServerError)
 	}
 	f.l.Println(ne)
+
+	//Add new expense into expenses
 	err = data.NewExpense(&ne)
+
+	if err != nil {
+		f.l.Printf("Error adding expense: %s", err)
+		http.Error(rw, "Failed to add expense", http.StatusInternalServerError)
+	}
 
  }
