@@ -37,7 +37,12 @@ func NewExpense(e *Expense) error {
 	e.ID = (len(MonthlyExpenses) + 1)
 
 	//
-	if e.SearchFields("Name", e.Name) != true, nil {
+	b, err := e.SearchFields("Name", e.Name)
+
+	if err != nil {
+		return errors.New("Checking invalid field")
+	}
+	if b == true {
 		return errors.New("Item Name already exists in expenses")
 	}
 	// Could add some verification on data format
@@ -49,7 +54,7 @@ var MonthlyExpenses = Expenses{}
 
 // Module to search if field value already exisits
 // This will need rewriting when applicaiton uses database
-func (Expense) SearchFields(f string, v any) (bool, error) {
+func (Expense) SearchFields(f any, v any) (bool, error) {
 	// Create array of values from specific field
 	var currentValues []any
 	for _, expense := range MonthlyExpenses {
@@ -72,15 +77,15 @@ func (Expense) SearchFields(f string, v any) (bool, error) {
 	}
 }
 
-func UpdateExpense(i int) error (
-	v, err := SearchFields(int)
+func UpdateExpense(e *Expense) error {
+	v, err := e.SearchFields(e.ID, "ID")
 	if err != nil {
 		return errors.New("Error searching for ID")
 	}
 	if v == false {
 		return errors.New("ID does not exist")
 	}
-	
+	MonthlyExpenses[e.ID].Price = e.Price
+	return nil
 
-
-)
+}

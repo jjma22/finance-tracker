@@ -124,6 +124,8 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 
  func (f*financeServer) UpdateExpense( rw http.ResponseWriter, r*http.Request) {
 	f.l.Println("Updating expense")
+	
+	// Get ID from path
 	e := strings.Split(r.URL.Path,`/`)
 	f.l.Println(len(e))
 	if (len(e) != 4) {
@@ -136,7 +138,17 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 		http.Error(rw, "Bad request", http.StatusBadRequest)
 	}
 
+	var exp data.Expense
+	err = json.NewDecoder(r.Body).Decode(&exp)
+	if err != nil {
+		f.l.Println("Error unmarshalling request")
+		http.Error(rw, "Unable to unmarshall request", http.StatusInternalServerError)
+	}
 
-	err = data.UpdateExpense
+	exp.ID = id
+	err = data.UpdateExpense(&exp)
+	if err != nil {
+		f.l.Println(err)
+	}
 	
  }
