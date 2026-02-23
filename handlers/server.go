@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-
+	"strings"
+	"strconv"
 	"main.go/data"
 	"main.go/service"
 )
@@ -38,6 +39,10 @@ func (f*financeServer) ServeHTTP(rw http.ResponseWriter, r*http.Request) {
 	if r.Method == http.MethodPost && r.URL.Path == "/expense"{
 		f.AddExpense(rw, r)
 		return
+	}
+
+	if r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/expense/update/") {
+		f.UpdateExpense(rw, r)
 	}
 }
 
@@ -115,4 +120,23 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 	}
 
 
+ }
+
+ func (f*financeServer) UpdateExpense( rw http.ResponseWriter, r*http.Request) {
+	f.l.Println("Updating expense")
+	e := strings.Split(r.URL.Path,`/`)
+	f.l.Println(len(e))
+	if (len(e) != 4) {
+		f.l.Println("Bad request, invalid path")
+		http.Error(rw, "Invalid path", http.StatusBadRequest)
+	}
+	id, err := strconv.Atoi(e[3])
+	if err != nil {
+		f.l.Println("Invalid request sent to UpdateExpense")
+		http.Error(rw, "Bad request", http.StatusBadRequest)
+	}
+
+
+	err = data.UpdateExpense
+	
  }
