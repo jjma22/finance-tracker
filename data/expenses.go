@@ -87,7 +87,7 @@ func UpdateExpense(e *Expense) error {
 		return errors.New("ID does not exist")
 	}
 	fmt.Println("Expense found, updating")
-	MonthlyExpenses[(e.ID-1)].Price = e.Price
+	MonthlyExpenses[(e.ID - 1)].Price = e.Price
 	return nil
 
 }
