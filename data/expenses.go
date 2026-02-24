@@ -3,6 +3,7 @@ package data
 import (
 	"errors"
 	"slices"
+	"fmt"
 
 )
 
@@ -78,14 +79,15 @@ func (Expense) SearchFields(f any, v any) (bool, error) {
 }
 
 func UpdateExpense(e *Expense) error {
-	v, err := e.SearchFields(e.ID, "ID")
+	v, err := e.SearchFields("ID", e.ID)
 	if err != nil {
 		return errors.New("Error searching for ID")
 	}
 	if v == false {
 		return errors.New("ID does not exist")
 	}
-	MonthlyExpenses[e.ID].Price = e.Price
+	fmt.Println("Expense found, updating")
+	MonthlyExpenses[(e.ID-1)].Price = e.Price
 	return nil
 
 }
