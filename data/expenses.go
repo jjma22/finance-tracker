@@ -91,3 +91,17 @@ func UpdateExpense(e *Expense) error {
 	return nil
 
 }
+
+func DeleteExpense(i int) error {
+	v, err := e.SearchFields("ID", i)
+	if err != nil {
+		return errors.New("Error searching for ID")
+	}
+	if v == false {
+		return errors.New("ID does not exist")
+	}
+
+	MonthlyExpenses = slices.Delete(MonthlyExpenses, (i-1))
+	return nil
+
+}

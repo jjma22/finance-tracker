@@ -44,6 +44,10 @@ func (f*financeServer) ServeHTTP(rw http.ResponseWriter, r*http.Request) {
 	if r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/expense/update/") {
 		f.UpdateExpense(rw, r)
 	}
+
+	if r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/expense/update/") {
+		f.DeleteExpense(rw, r)
+	}
 }
 
 
@@ -151,4 +155,21 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 		f.l.Println(err)
 	}
 	
+ }
+
+ func DeleteExpense(rw http.ResponseWriter, r *Request) {
+		// Get ID from path
+		e := strings.Split(r.URL.Path,`/`)
+		f.l.Println(len(e))
+		if (len(e) != 4) {
+			f.l.Println("Bad request, invalid path")
+			http.Error(rw, "Invalid path", http.StatusBadRequest)
+		}
+		id, err := strconv.Atoi(e[3])
+		if err != nil {
+			f.l.Println("Invalid request sent to UpdateExpense")
+			http.Error(rw, "Bad request", http.StatusBadRequest)
+		}
+
+		err = data.DeleteExpense(id)
  }
