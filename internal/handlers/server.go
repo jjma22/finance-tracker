@@ -37,6 +37,11 @@ func (f*financeServer) ServeHTTP(rw http.ResponseWriter, r*http.Request) {
 		return
 	}
 
+	if r.Method == http.MethodGet && r.URL.Path == "/expense/total"{
+		f.GetTotalExpense(rw, r)
+		return
+	}
+
 	if r.Method == http.MethodPost && r.URL.Path == "/expense"{
 		f.AddExpense(rw, r)
 		return
@@ -125,9 +130,9 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 	}
 
 
- }
+}
 
- func (f*financeServer) UpdateExpense( rw http.ResponseWriter, r*http.Request) {
+func (f*financeServer) UpdateExpense( rw http.ResponseWriter, r*http.Request) {
 	f.l.Println("Updating expense")
 	
 	// Get ID from path
@@ -156,9 +161,9 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 		f.l.Println(err)
 	}
 	
- }
+}
 
- func (f*financeServer)DeleteExpense(rw http.ResponseWriter, r * http.Request) {
+func (f*financeServer)DeleteExpense(rw http.ResponseWriter, r * http.Request) {
 		// Get ID from path
 		e := strings.Split(r.URL.Path,`/`)
 		f.l.Println(len(e))
@@ -173,4 +178,8 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 		}
 
 		err = data.DeleteExpense(id)
- }
+}
+
+func (f*financeServer)GetTotalExpense(rw http.ResponseWriter, r *http.Request) {
+	t, err := data.GetTotal()
+}

@@ -106,3 +106,7 @@ func DeleteExpense(i int) error {
 	return nil
 
 }
+
+func GetTotal() (float32, error) {
+	
+}
