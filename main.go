@@ -18,6 +18,7 @@ func main() {
 	sm := http.NewServeMux()
 	sm.Handle("/", fh)
 
+	//Remove 127.0.0.1 when deploying to Docker, causes issues on local firewall without
 	serverPort := "127.0.0.1:9090"
 
 	s := &http.Server{
