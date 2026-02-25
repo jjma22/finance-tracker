@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
 	"strconv"
+	"strings"
+
 	"main.go/data"
 	"main.go/service"
 )
@@ -45,7 +46,7 @@ func (f*financeServer) ServeHTTP(rw http.ResponseWriter, r*http.Request) {
 		f.UpdateExpense(rw, r)
 	}
 
-	if r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/expense/update/") {
+	if r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/expense/delete/") {
 		f.DeleteExpense(rw, r)
 	}
 }
@@ -157,7 +158,7 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 	
  }
 
- func DeleteExpense(rw http.ResponseWriter, r *Request) {
+ func (f*financeServer)DeleteExpense(rw http.ResponseWriter, r * http.Request) {
 		// Get ID from path
 		e := strings.Split(r.URL.Path,`/`)
 		f.l.Println(len(e))

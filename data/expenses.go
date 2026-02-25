@@ -2,9 +2,8 @@ package data
 
 import (
 	"errors"
-	"slices"
 	"fmt"
-
+	"slices"
 )
 
 type Expense struct {
@@ -93,6 +92,8 @@ func UpdateExpense(e *Expense) error {
 }
 
 func DeleteExpense(i int) error {
+	var e Expense
+	e.ID = i
 	v, err := e.SearchFields("ID", i)
 	if err != nil {
 		return errors.New("Error searching for ID")
@@ -101,7 +102,7 @@ func DeleteExpense(i int) error {
 		return errors.New("ID does not exist")
 	}
 
-	MonthlyExpenses = slices.Delete(MonthlyExpenses, (i-1))
+	MonthlyExpenses = slices.Delete(MonthlyExpenses, (i-1), i)
 	return nil
 
 }
