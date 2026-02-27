@@ -108,5 +108,9 @@ func DeleteExpense(i int) error {
 }
 
 func GetTotal() (float32, error) {
-	
+	var t float32
+	for _, e := range MonthlyExpenses {
+		t += e.Price
+	}
+	return t, nil
 }

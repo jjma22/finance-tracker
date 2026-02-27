@@ -181,5 +181,15 @@ func (f*financeServer)DeleteExpense(rw http.ResponseWriter, r * http.Request) {
 }
 
 func (f*financeServer)GetTotalExpense(rw http.ResponseWriter, r *http.Request) {
+	f.l.Println("Getting total expenses")
 	t, err := data.GetTotal()
+	if err != nil {
+		f.l.Println("Error getting total expenses")
+		http.Error(rw, "Errror getting total expenses", http.StatusInternalServerError)
+	}
+	//rw.Write(Float32ToByte(float32(val)))
+	en := json.NewEncoder(rw)
+	en.Encode(t)
+
+
 }
