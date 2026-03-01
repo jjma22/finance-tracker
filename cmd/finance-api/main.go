@@ -16,7 +16,17 @@ func main() {
 	l := log.New(os.Stdout, "fin-api,", log.LstdFlags)
 	fh := handlers.FinanceNewServer(l)
 	sm := http.NewServeMux()
-	sm.Handle("/", fh)
+	//sm.Handle("/", fh)
+	//HandleFunc(pattern string, handler func(ResponseWriter, *Request))
+	sm.HandleFunc("GET /monthlybudget", fh.GetBudget)
+	sm.HandleFunc("PUT /monthlybudget", fh.UpdateBudget)
+
+	sm.HandleFunc("GET /expense", fh.GetExpenses)
+	sm.HandleFunc("GET /expense/total", fh.GetTotalExpense)
+	sm.HandleFunc("POST /expense", fh.AddExpense)
+	sm.HandleFunc("PUT /expense/update/{id}", fh.UpdateExpense)
+
+
 
 	//Remove 127.0.0.1 when deploying to Docker, causes issues on local firewall without
 	serverPort := "127.0.0.1:9090"
