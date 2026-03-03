@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
 )
 
 type Expense struct {
@@ -11,7 +12,8 @@ type Expense struct {
 	Name  string
 	Type  string
 	Price float32
-	Date  string
+	DateAdded  string
+	LastUpdate string
 }
 
 type Expenses []*Expense
@@ -36,7 +38,6 @@ func NewExpense(e *Expense) error {
 
 	e.ID = (len(MonthlyExpenses) + 1)
 
-	//
 	b, err := e.SearchFields("Name", e.Name)
 
 	if err != nil {
@@ -45,6 +46,9 @@ func NewExpense(e *Expense) error {
 	if b == true {
 		return errors.New("Item Name already exists in expenses")
 	}
+
+	//Set DateAdded
+	e.DateAdded = time.Now().Truncate(time.Second).Format("2006-01-02 15:04:05")
 	// Could add some verification on data format
 	MonthlyExpenses = append(MonthlyExpenses, e)
 	return nil
@@ -86,7 +90,9 @@ func UpdateExpense(e *Expense) error {
 		return errors.New("ID does not exist")
 	}
 	fmt.Println("Expense found, updating")
+	//MonthlyExpenses[(e.ID - 1)].Price = e.Price
 	MonthlyExpenses[(e.ID - 1)].Price = e.Price
+	MonthlyExpenses[(e.ID - 1)].LastUpdate = time.Now().Truncate(time.Second).Format("2006-01-02 15:04:05")
 	return nil
 
 }
