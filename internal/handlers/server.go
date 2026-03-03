@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/jjma22/finance-tracker.git/internal/data"
 	"github.com/jjma22/finance-tracker.git/internal/service"
@@ -19,17 +18,17 @@ func FinanceNewServer(l *log.Logger) *financeServer{
 	return &financeServer{l}
 }
 
-func (f*financeServer) ServeHTTP(rw http.ResponseWriter, r*http.Request) {
+// func (f*financeServer) ServeHTTP(rw http.ResponseWriter, r*http.Request) {
 
 
-	// if r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/expense/update/") {
-	// 	f.UpdateExpense(rw, r)
-	// }
+// 	// if r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/expense/update/") {
+// 	// 	f.UpdateExpense(rw, r)
+// 	// }
 
-	if r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/expense/delete/") {
-		f.DeleteExpense(rw, r)
-	}
-}
+// 	if r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/expense/delete/") {
+// 		f.DeleteExpense(rw, r)
+// 	}
+// }
 
 
 func (f*financeServer) GetBudget(rw http.ResponseWriter, r*http.Request) {
@@ -110,24 +109,12 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 func (f*financeServer) UpdateExpense( rw http.ResponseWriter, r*http.Request) {
 	f.l.Println("Updating expense")
 	
-	// Get ID from path
-	// e := strings.Split(r.URL.Path,`/`)
-	// f.l.Println(len(e))
-	// if (len(e) != 4) {
-	// 	f.l.Println("Bad request, invalid path")
-	// 	http.Error(rw, "Invalid path", http.StatusBadRequest)
-	// }
-	// id, err := strconv.Atoi(e[3])
-	// if err != nil {
-	// 	f.l.Println("Invalid request sent to UpdateExpense")
-	// 	http.Error(rw, "Bad request", http.StatusBadRequest)
-	// }
-
 	var exp data.Expense
 	err := json.NewDecoder(r.Body).Decode(&exp)
 	if err != nil {
 		f.l.Println("Error unmarshalling request")
 		http.Error(rw, "Unable to unmarshall request", http.StatusInternalServerError)
+		return
 	}
 
 	exp.ID, _ = strconv.Atoi(r.PathValue("id"))
@@ -139,20 +126,15 @@ func (f*financeServer) UpdateExpense( rw http.ResponseWriter, r*http.Request) {
 }
 
 func (f*financeServer)DeleteExpense(rw http.ResponseWriter, r * http.Request) {
-		// Get ID from path
-		e := strings.Split(r.URL.Path,`/`)
-		f.l.Println(len(e))
-		if (len(e) != 4) {
-			f.l.Println("Bad request, invalid path")
-			http.Error(rw, "Invalid path", http.StatusBadRequest)
-		}
-		id, err := strconv.Atoi(e[3])
-		if err != nil {
-			f.l.Println("Invalid request sent to UpdateExpense")
-			http.Error(rw, "Bad request", http.StatusBadRequest)
-		}
 
-		err = data.DeleteExpense(id)
+		ID, _ := strconv.Atoi(r.PathValue("id"))
+		err := data.DeleteExpense(ID)
+		if err != nil {
+			f.l.Println(err)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		f.l.Printf("ID %d successfully delete", ID)
 }
 
 func (f*financeServer)GetTotalExpense(rw http.ResponseWriter, r *http.Request) {

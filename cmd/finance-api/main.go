@@ -25,7 +25,7 @@ func main() {
 	sm.HandleFunc("GET /expense/total", fh.GetTotalExpense)
 	sm.HandleFunc("POST /expense", fh.AddExpense)
 	sm.HandleFunc("PUT /expense/update/{id}", fh.UpdateExpense)
-
+	sm.HandleFunc("DELETE /expense/delete/{id}", fh.DeleteExpense)
 
 
 	//Remove 127.0.0.1 when deploying to Docker, causes issues on local firewall without
