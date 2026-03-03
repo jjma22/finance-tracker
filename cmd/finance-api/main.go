@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,7 +13,9 @@ import (
 
 func main() {
 
-	l := log.New(os.Stdout, "fin-api,", log.LstdFlags)
+	//l := log.New(os.Stdout, "fin-api,", log.LstdFlags)
+	l := slog.Default()
+
 	fh := handlers.FinanceNewServer(l)
 	sm := http.NewServeMux()
 	//sm.Handle("/", fh)
@@ -42,18 +44,18 @@ func main() {
 	go func() {
 		err := s.ListenAndServe()
 		if err != nil {
-			l.Fatal(err)
+			l.Error(err.Error())
 		}
 	}()
 
-	l.Printf("Listening on port %v", serverPort)
+	l.Info("Listening on port", "port", serverPort)
 
 	sigChan :=make(chan os.Signal)
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, os.Kill)
 
 	sig := <- sigChan
-	l.Println("Recieve termiante, graceful shutdown", sig)
+	l.Info("Recieve termiante, graceful shutdown", "sig", sig)
 	
 	tc, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	s.	Shutdown(tc)
