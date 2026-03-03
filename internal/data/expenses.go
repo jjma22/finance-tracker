@@ -8,12 +8,12 @@ import (
 )
 
 type Expense struct {
-	ID    int
-	Name  string
-	Type  string
-	Price float32
-	DateAdded  string
-	LastUpdate string
+	ID    int `json:"id"`
+	Name  string `json:"name"`
+	// Type  string `json:"type"`
+	Price float32 `json:"price"`
+	DateAdded  string `json:"-"`
+	LastUpdate string `json:"-"`
 }
 
 type Expenses []*Expense
@@ -90,7 +90,6 @@ func UpdateExpense(e *Expense) error {
 		return errors.New("ID does not exist")
 	}
 	fmt.Println("Expense found, updating")
-	//MonthlyExpenses[(e.ID - 1)].Price = e.Price
 	MonthlyExpenses[(e.ID - 1)].Price = e.Price
 	MonthlyExpenses[(e.ID - 1)].LastUpdate = time.Now().Truncate(time.Second).Format("2006-01-02 15:04:05")
 	return nil
