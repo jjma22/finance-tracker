@@ -25,7 +25,7 @@ func main() {
 
 	sm.HandleFunc("GET /expense", fh.GetExpenses)
 	sm.HandleFunc("GET /expense/total", fh.GetTotalExpense)
-	sm.HandleFunc("POST /expense", fh.AddExpense)
+	sm.Handle("POST /expense", fh.MiddleWareValidateExpense(http.HandlerFunc(fh.AddExpense)))
 	sm.HandleFunc("PUT /expense/update/{id}", fh.UpdateExpense)
 	sm.HandleFunc("DELETE /expense/delete/{id}", fh.DeleteExpense)
 

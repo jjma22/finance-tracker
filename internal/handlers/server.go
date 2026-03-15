@@ -1,7 +1,24 @@
+// Package classification of Expense API
+//
+// Documentation for Expense API
+//
+// Schemes: http
+// BasePath: /
+// Version: 1.0.0
+//
+// Consumes:
+// - application/json
+//
+// Produces:
+// - application/json
+// swagger:meta
+
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -83,19 +100,25 @@ func (f*financeServer) GetExpenses(rw http.ResponseWriter, r*http.Request) {
 
 
 }
-
-func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
-	// Read body with expense into ne
-	var ne data.Expense
-	f.l.Info("Adding new expense")
-	err := json.NewDecoder(r.Body).Decode(&ne)
+ 
+func (f*financeServer) ExpenseFromJSON(r*http.Request) (*data.Expense) {
+	var e data.Expense
+	err := json.NewDecoder(r.Body).Decode(&e)
 	if err != nil {
 		f.l.Error(err.Error())
-		http.Error(rw, "Unable to unmarshall json", http.StatusInternalServerError)
 	}
+	fmt.Println(e)
+	return &e
 
-	//Add new expense into expenses
-	err = data.NewExpense(&ne)
+}
+
+func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
+	f.l.Info("Adding new expense")
+	e := r.Context().Value(Keyexpense{}).(*data.Expense)
+
+	fmt.Println(e)
+
+	err := data.NewExpense(e)
 
 	if err != nil {
 		f.l.Error("Error adding expense", "error", err)
@@ -149,3 +172,35 @@ func (f*financeServer)GetTotalExpense(rw http.ResponseWriter, r *http.Request) {
 
 
 }
+
+type Keyexpense struct{}
+
+func (f*financeServer) MiddleWareValidateExpense(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r*http.Request) {
+		expense := f.ExpenseFromJSON(r)
+		// need to add from JSON
+		// err := expense.FromJSON(r.Body)
+		// if err != nil {
+		// 	f.l.Error("MW - Error deserialzing product")
+		// 	http.Error(rw, "Error reading product", http.StatusBadRequest)
+		// 	return
+		// }
+
+		err := expense.Validate()
+		if err != nil {
+			f.l.Error("MW - Error validating expense")
+			http.Error(
+				rw, 
+				fmt.Sprintf("Error validating expense: %s", err), 
+				http.StatusBadRequest,
+			)
+			return
+		}
+		fmt.Println(expense)
+		ctx := context.WithValue(r.Context(), Keyexpense{}, expense)
+		r = r.WithContext(ctx)
+
+		next.ServeHTTP(rw, r)
+	})
+}
+
