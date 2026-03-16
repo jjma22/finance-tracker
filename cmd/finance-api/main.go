@@ -8,15 +8,22 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/jjma22/finance-tracker.git/internal/database"
 	"github.com/jjma22/finance-tracker.git/internal/handlers"
 )
+
 
 func main() {
 
 	//l := log.New(os.Stdout, "fin-api,", log.LstdFlags)
 	l := slog.Default()
 
-	db := database.newDB(l)
+	db := database.NewDb(l)
+	err := db.ConnectDb()
+	if err != nil {
+		slog.Error("Error connecting to db from main, panicking!")
+		panic("Unable to connect to database")
+	}
 
 	fh := handlers.FinanceNewServer(l)
 	sm := http.NewServeMux()
