@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"strconv"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5"
 )
 
 const (
@@ -23,7 +23,7 @@ type db struct {
 	port int
 }
 
-func (*db) newDb(l *slog.Logger) (*db) {
+func NewDb(l *slog.Logger) (*db) {
 	return &db{
 		l: l,
 		host : host,
@@ -32,16 +32,15 @@ func (*db) newDb(l *slog.Logger) (*db) {
 	}
 }
 
-func (d*db) connectDb() (error) {
-	conString, err := pgx.ParseConfig((host + ":" + strconv.Itoa(port) ))
+func (d*db) ConnectDb() (error) {
+	url := "postgresql://" + user + ":" + password + "@" + host + ":" + strconv.Itoa(port) + "/" + dbname
+	conn, err := pgx.Connect(context.Background(), url)
 	if err != nil {
-		d.l.Error("Could not parse db connection string")
+		d.l.Error("Could not connect to database -", "Error", err)
 		return err
 	}
-	_ , err = pgx.Connect(context.Background(), conString)
-	if err != nil {
-		d.l.Error("Could not connect to database")
-		return err
-	}
+	d.l.Info("Successfully established connection to database")
+	defer conn.Close(context.Background())
+	return nil
 
 }
