@@ -16,6 +16,8 @@ func main() {
 	//l := log.New(os.Stdout, "fin-api,", log.LstdFlags)
 	l := slog.Default()
 
+	db := database.newDB(l)
+
 	fh := handlers.FinanceNewServer(l)
 	sm := http.NewServeMux()
 	//sm.Handle("/", fh)

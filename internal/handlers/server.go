@@ -1,18 +1,3 @@
-// Package classification of Expense API
-//
-// Documentation for Expense API
-//
-// Schemes: http
-// BasePath: /
-// Version: 1.0.0
-//
-// Consumes:
-// - application/json
-//
-// Produces:
-// - application/json
-// swagger:meta
-
 package handlers
 
 import (
@@ -34,18 +19,6 @@ type financeServer struct {
 func FinanceNewServer(l *slog.Logger) *financeServer{
 	return &financeServer{l}
 }
-
-// func (f*financeServer) ServeHTTP(rw http.ResponseWriter, r*http.Request) {
-
-
-// 	// if r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/expense/update/") {
-// 	// 	f.UpdateExpense(rw, r)
-// 	// }
-
-// 	if r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/expense/delete/") {
-// 		f.DeleteExpense(rw, r)
-// 	}
-// }
 
 
 func (f*financeServer) GetBudget(rw http.ResponseWriter, r*http.Request) {
@@ -101,15 +74,15 @@ func (f*financeServer) GetExpenses(rw http.ResponseWriter, r*http.Request) {
 
 }
  
-func (f*financeServer) ExpenseFromJSON(r*http.Request) (*data.Expense) {
+func (f*financeServer) ExpenseFromJSON(r*http.Request) (error, *data.Expense) {
 	var e data.Expense
 	err := json.NewDecoder(r.Body).Decode(&e)
 	if err != nil {
 		f.l.Error(err.Error())
+		return err, nil
 	}
 	fmt.Println(e)
-	return &e
-
+	return nil, &e
 }
 
 func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
@@ -177,16 +150,14 @@ type Keyexpense struct{}
 
 func (f*financeServer) MiddleWareValidateExpense(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r*http.Request) {
-		expense := f.ExpenseFromJSON(r)
-		// need to add from JSON
-		// err := expense.FromJSON(r.Body)
-		// if err != nil {
-		// 	f.l.Error("MW - Error deserialzing product")
-		// 	http.Error(rw, "Error reading product", http.StatusBadRequest)
-		// 	return
-		// }
+		err, expense := f.ExpenseFromJSON(r)
+		if err != nil {
+			f.l.Error("MW - Error deserialzing product")
+			http.Error(rw, "Error reading product", http.StatusBadRequest)
+			return
+		}
 
-		err := expense.Validate()
+		err = expense.Validate()
 		if err != nil {
 			f.l.Error("MW - Error validating expense")
 			http.Error(
