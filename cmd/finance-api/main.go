@@ -18,12 +18,8 @@ func main() {
 	//l := log.New(os.Stdout, "fin-api,", log.LstdFlags)
 	l := slog.Default()
 
-	db := database.NewDb(l)
-	err := db.ConnectDb()
-	if err != nil {
-		slog.Error("Error connecting to db from main, panicking!")
-		panic("Unable to connect to database")
-	}
+	// Setup database connection
+	database.InitDb(l)
 
 	fh := handlers.FinanceNewServer(l)
 	sm := http.NewServeMux()

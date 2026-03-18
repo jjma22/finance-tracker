@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/jjma22/finance-tracker.git/internal/data"
+	"github.com/jjma22/finance-tracker.git/internal/database"
 	"github.com/jjma22/finance-tracker.git/internal/service"
 )
 
@@ -64,6 +65,7 @@ func (f*financeServer) UpdateBudget(rw http.ResponseWriter, r*http.Request) {
 func (f*financeServer) GetExpenses(rw http.ResponseWriter, r*http.Request) {
 	f.l.Info("Getting expenses")
 	ge := data.GetExpenses()
+	// ge := database.GetExpense
 	resp, err := json.Marshal(ge)
 	if err != nil {
 		f.l.Error("Error getting expenses", "error", err)
@@ -134,7 +136,8 @@ func (f*financeServer)DeleteExpense(rw http.ResponseWriter, r * http.Request) {
 
 func (f*financeServer)GetTotalExpense(rw http.ResponseWriter, r *http.Request) {
 	f.l.Info("Getting total expenses")
-	t, err := data.GetTotal()
+
+	t, err := database.GetTotal()
 	if err != nil {
 		f.l.Error("Error getting total expenses")
 		http.Error(rw, "Errror getting total expenses", http.StatusInternalServerError)
