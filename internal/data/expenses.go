@@ -117,6 +117,7 @@ func UpdateExpense(e *Expense) error {
 		return errors.New("ID does not exist")
 	}
 	fmt.Println("Expense found, updating")
+	fmt.Println(e.Price)
 	MonthlyExpenses[(e.ID - 1)].Price = e.Price
 	MonthlyExpenses[(e.ID - 1)].LastUpdate = time.Now().Truncate(time.Second).Format("2006-01-02 15:04:05")
 	return nil

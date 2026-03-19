@@ -75,6 +75,20 @@ func (f*financeServer) GetExpenses(rw http.ResponseWriter, r*http.Request) {
 
 
 }
+
+func (f*financeServer) GetExpense(rw http.ResponseWriter, r*http.Request) {
+	f.l.Info("Getting expenses")
+	ge := data.GetExpenses()
+	// ge := database.GetExpense
+	resp, err := json.Marshal(ge)
+	if err != nil {
+		f.l.Error("Error getting expenses", "error", err)
+		http.Error(rw, "Unable to retive expenses", http.StatusInternalServerError)
+	}
+	rw.Write(resp)
+
+
+}
  
 func (f*financeServer) ExpenseFromJSON(r*http.Request) (error, *data.Expense) {
 	var e data.Expense
@@ -86,6 +100,18 @@ func (f*financeServer) ExpenseFromJSON(r*http.Request) (error, *data.Expense) {
 	fmt.Println(e)
 	return nil, &e
 }
+
+func (f*financeServer) ExpenseToJSON(r*http.Request) (*data.Expense, error) {
+	var exp data.Expense
+	err := json.NewDecoder(r.Body).Decode(&exp)
+	if err != nil {
+		return nil, err
+
+	}
+	return &exp, nil
+
+}
+
 
 func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 	f.l.Info("Adding new expense")
@@ -105,17 +131,16 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 
 func (f*financeServer) UpdateExpense( rw http.ResponseWriter, r*http.Request) {
 	f.l.Info("Updating expense")
-	
-	var exp data.Expense
-	err := json.NewDecoder(r.Body).Decode(&exp)
+
+	exp, err := f.ExpenseToJSON(r)
+
 	if err != nil {
-		f.l.Error("Error unmarshalling request")
-		http.Error(rw, "Unable to unmarshall request", http.StatusInternalServerError)
-		return
+		slog.Error("Issue decoding request body -", "error", err)
+		http.Error(rw, "Issue decoding request", http.StatusInternalServerError)
 	}
 
 	exp.ID, _ = strconv.Atoi(r.PathValue("id"))
-	err = data.UpdateExpense(&exp)
+	err = data.UpdateExpense(exp)
 	if err != nil {
 		f.l.Error(err.Error())
 	}
