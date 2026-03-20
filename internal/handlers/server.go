@@ -78,14 +78,13 @@ func (f*financeServer) GetExpenses(rw http.ResponseWriter, r*http.Request) {
 
 func (f*financeServer) GetExpense(rw http.ResponseWriter, r*http.Request) {
 	f.l.Info("Getting expenses")
-	ge := data.GetExpenses()
-	// ge := database.GetExpense
-	resp, err := json.Marshal(ge)
+	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		f.l.Error("Error getting expenses", "error", err)
-		http.Error(rw, "Unable to retive expenses", http.StatusInternalServerError)
+		f.l.Error("Error getting id from path value", "error", err)
+		http.Error(rw, "Invalid request", http.StatusBadRequest)
 	}
-	rw.Write(resp)
+	exp, err := database.GetExpense(id)
+	fmt.Println(exp)
 
 
 }

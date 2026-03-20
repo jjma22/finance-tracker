@@ -8,7 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jjma22/finance-tracker.git/internal/data"
 )
 
 const (
@@ -75,7 +77,7 @@ func InitDb(l *slog.Logger) () {
 
 func GetTotal() (float32, error) {
 
-	DB.l.Info("Running database query")
+	DB.l.Info("Getting total expenses from database")
 	// Runs query on database
 	rows, err := DB.pool.Query(context.Background(), "select price from expenses")
 
@@ -91,7 +93,6 @@ func GetTotal() (float32, error) {
 	for rows.Next() {
 		var n string
 		err = rows.Scan(&n)
-		fmt.Println(n)
 		if err != nil {
 			DB.l.Error("Failed to scan rows in value", "error", err)
 			return 0, err
@@ -106,4 +107,36 @@ func GetTotal() (float32, error) {
 		return 0, rows.Err()
 	}
 	return sum, nil
+}
+
+
+// temp object - will remove once date columns are updated to time type on data.Expense Struct
+type tempExpense struct {
+	ID    int `json:"id"`
+	Name  string `json:"name" validate:"required"`
+	// Type  string `json:"type"`
+	Price float32 `json:"price" validate:"gt=0"`
+	SKU string `json:"sku" validate:"required,sku"`
+	DateAdded  time.Time `json:"-"`
+	LastUpdate time.Time `json:"-"`
+}
+
+func GetExpense(id int) (*data.Expense, error) {
+
+	DB.l.Info("Getting (id - needs adding) expenses from database")
+	// Runs query on database
+	row, err := DB.pool.Query(context.Background(), "select * from expenses where id = $1", id)
+
+	exp, err :=  pgx.CollectRows(row, pgx.RowToStructByName[tempExpense])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		DB.l.Error("Failed querying row", "error", err)
+		return nil, err
+	}
+
+	fmt.Println(exp)
+
+	
+
+	return nil, nil
 }
