@@ -14,5 +14,15 @@ CREATE TABLE expenses  (
 )
 
 -- Update id to become primary key
-
 ALTER TABLE expenses ADD primary key (id INT)
+
+-- Update price to be numberic type
+ALTER TABLE expenses 
+ALTER COLUMN price TYPE NUMERIC USING price::numeric;
+
+-- Use timestampz for timezones
+ALTER TABLE expenses
+ALTER COLUMN dateadded TYPE timestamptz;
+
+ALTER TABLE expenses
+ALTER COLUMN lastupdate TYPE timestamptz;
