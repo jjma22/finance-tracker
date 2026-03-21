@@ -84,7 +84,16 @@ func (f*financeServer) GetExpense(rw http.ResponseWriter, r*http.Request) {
 		http.Error(rw, "Invalid request", http.StatusBadRequest)
 	}
 	exp, err := database.GetExpense(id)
-	fmt.Println(exp)
+	if err != nil {
+			f.l.Error("Error retrieving expense", "error", err)
+			http.Error(rw, "Could not retrieve expense", http.StatusInternalServerError)
+		}
+	resp, err := json.Marshal(exp)
+	if err != nil {
+		f.l.Error("Error getting expenses", "error", err)
+		http.Error(rw, "Unable to retive expenses", http.StatusInternalServerError)
+	}
+	rw.Write(resp)
 
 
 }

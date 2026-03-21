@@ -16,8 +16,8 @@ type Expense struct {
 	// Type  string `json:"type"`
 	Price float32 `json:"price" validate:"gt=0"`
 	SKU string `json:"sku" validate:"required,sku"`
-	DateAdded  string `json:"-"`
-	LastUpdate string `json:"-"`
+	DateAdded  time.Time `json:"-"`
+	LastUpdate time.Time `json:"-"`
 }
 
 type Expenses []*Expense
@@ -75,7 +75,7 @@ func NewExpense(e *Expense) error {
 	}
 
 	//Set DateAdded
-	e.DateAdded = time.Now().Truncate(time.Second).Format("2006-01-02 15:04:05")
+	//e.DateAdded = time.Now().Truncate(time.Second).Format("2006-01-02 15:04:05")
 	// Could add some verification on data format
 	MonthlyExpenses = append(MonthlyExpenses, e)
 	return nil
@@ -119,7 +119,7 @@ func UpdateExpense(e *Expense) error {
 	fmt.Println("Expense found, updating")
 	fmt.Println(e.Price)
 	MonthlyExpenses[(e.ID - 1)].Price = e.Price
-	MonthlyExpenses[(e.ID - 1)].LastUpdate = time.Now().Truncate(time.Second).Format("2006-01-02 15:04:05")
+	//MonthlyExpenses[(e.ID - 1)].LastUpdate = time.Now().Truncate(time.Second).Format("2006-01-02 15:04:05")
 	return nil
 
 }

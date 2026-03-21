@@ -117,8 +117,8 @@ type tempExpense struct {
 	// Type  string `json:"type"`
 	Price float32 `json:"price" validate:"gt=0"`
 	SKU string `json:"sku" validate:"required,sku"`
-	DateAdded  time.Time `json:"-"`
-	LastUpdate time.Time `json:"-"`
+	DateAdded  *time.Time `json:"-"`
+	LastUpdate *time.Time `json:"-"`
 }
 
 func GetExpense(id int) (*data.Expense, error) {
@@ -133,10 +133,23 @@ func GetExpense(id int) (*data.Expense, error) {
 		DB.l.Error("Failed querying row", "error", err)
 		return nil, err
 	}
+	// Prevents kernel error if last update or date added is nil
+	if exp[0].DateAdded == nil {
+		DB.l.Info("Setting DateAdded to nil")
+		exp[0].DateAdded = &time.Time{}
+	}
+	if exp[0].LastUpdate == nil {
+		DB.l.Info("Setting Lasttupdate to date added")
+		exp[0].LastUpdate = exp[0].DateAdded 
+	}
 
-	fmt.Println(exp)
 
-	
-
-	return nil, nil
+	return &data.Expense{
+		ID: exp[0].ID,
+		Name: exp[0].Name,
+		Price: exp[0].Price,
+		SKU: exp[0].SKU,
+		DateAdded: *exp[0].DateAdded,
+		LastUpdate: *exp[0].LastUpdate,
+	}, nil
 }
