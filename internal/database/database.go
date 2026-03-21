@@ -129,7 +129,6 @@ func GetExpense(id int) (*data.Expense, error) {
 
 	exp, err :=  pgx.CollectRows(row, pgx.RowToStructByName[tempExpense])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
 		DB.l.Error("Failed querying row", "error", err)
 		return nil, err
 	}
@@ -152,4 +151,15 @@ func GetExpense(id int) (*data.Expense, error) {
 		DateAdded: *exp[0].DateAdded,
 		LastUpdate: *exp[0].LastUpdate,
 	}, nil
+}
+
+func AddExpense(e *data.Expense) (error) {
+	_, err := DB.pool.Exec(context.Background(), "INSERT INTO expenses (name, price, sku, dateadded,lastupdate) Values ($1, $2, $3, $4, $5)",
+		e.Name, e.Price, e.SKU, e.DateAdded, e.LastUpdate)
+
+	if err != nil {
+		return err
+	}
+	return nil
+
 }

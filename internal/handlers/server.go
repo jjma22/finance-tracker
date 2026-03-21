@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/jjma22/finance-tracker.git/internal/data"
 	"github.com/jjma22/finance-tracker.git/internal/database"
@@ -125,16 +126,16 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 	f.l.Info("Adding new expense")
 	e := r.Context().Value(Keyexpense{}).(*data.Expense)
 
-	fmt.Println(e)
-
-	err := data.NewExpense(e)
+	e.DateAdded = time.Now().Truncate(time.Second)
+	e.LastUpdate = time.Now().Truncate(time.Second)
+	err := database.AddExpense(e)
 
 	if err != nil {
 		f.l.Error("Error adding expense", "error", err)
 		http.Error(rw, "Failed to add expense", http.StatusInternalServerError)
+		return
 	}
-
-
+	rw.WriteHeader(201)
 }
 
 func (f*financeServer) UpdateExpense( rw http.ResponseWriter, r*http.Request) {
@@ -203,7 +204,6 @@ func (f*financeServer) MiddleWareValidateExpense(next http.Handler) http.Handler
 			)
 			return
 		}
-		fmt.Println(expense)
 		ctx := context.WithValue(r.Context(), Keyexpense{}, expense)
 		r = r.WithContext(ctx)
 
