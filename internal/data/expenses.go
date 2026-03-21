@@ -51,36 +51,6 @@ func validateSKU(fl validator.FieldLevel) bool {
 }
 
 
-func NewExpense(e *Expense) error {
-
-	if e == nil {
-		return errors.New("Enpense cannot be nil")
-	}
-
-	if e.Price <= 0 {
-		return errors.New("Price has to be greater than 1")
-	}
-
-
-
-	e.ID = (len(MonthlyExpenses) + 1)
-
-	b, err := e.SearchFields("Name", e.Name)
-
-	if err != nil {
-		return errors.New("Checking invalid field")
-	}
-	if b == true {
-		return errors.New("Item Name already exists in expenses")
-	}
-
-	//Set DateAdded
-	//e.DateAdded = time.Now().Truncate(time.Second).Format("2006-01-02 15:04:05")
-	// Could add some verification on data format
-	MonthlyExpenses = append(MonthlyExpenses, e)
-	return nil
-}
-
 var MonthlyExpenses = Expenses{}
 
 // Module to search if field value already exisits

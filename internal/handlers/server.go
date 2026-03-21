@@ -135,6 +135,7 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 		http.Error(rw, "Failed to add expense", http.StatusInternalServerError)
 		return
 	}
+
 	rw.WriteHeader(201)
 }
 
@@ -159,10 +160,15 @@ func (f*financeServer) UpdateExpense( rw http.ResponseWriter, r*http.Request) {
 func (f*financeServer)DeleteExpense(rw http.ResponseWriter, r * http.Request) {
 
 		ID, _ := strconv.Atoi(r.PathValue("id"))
-		err := data.DeleteExpense(ID)
+		rows, err := database.DeleteExpense(ID)
 		if err != nil {
 			f.l.Error(err.Error())
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			http.Error(rw, "Failed to delete expense", http.StatusInternalServerError)
+			return
+		}
+		if rows == 0 {
+			f.l.Error("Cannot delete, ID does not exisit")
+			http.Error(rw, "ID not found, cannot delete", http.StatusNotFound)
 			return
 		}
 		f.l.Info("Expense delete", "ID", ID)

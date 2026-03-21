@@ -163,3 +163,19 @@ func AddExpense(e *data.Expense) (error) {
 	return nil
 
 }
+
+func DeleteExpense(id int) (int, error) {
+	ct, err := DB.pool.Exec(context.Background(), "DELETE FROM expenses WHERE id = $1",
+		id)	
+	if err != nil {
+		return 1, err
+	}
+
+	// return 0 if no rows updated (id not found)
+	if ct.RowsAffected() == 0 {
+		return 0, nil
+	}
+
+	return 1, nil
+
+}
