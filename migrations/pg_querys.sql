@@ -1,6 +1,5 @@
 -- Create initial database
-CREATE DATABASE expenses
-WITH  OWNER = postgres
+CREATE DATABASE expenses WITH  OWNER = postgres
 
 -- Create expenses table
 
@@ -14,7 +13,7 @@ CREATE TABLE expenses  (
 )
 
 -- Update id to become primary key
-ALTER TABLE expenses ADD primary key (id INT)
+ALTER TABLE expenses ADD primary key (id)
 
 -- Update price to be numberic type
 ALTER TABLE expenses 

@@ -27,7 +27,7 @@ type db struct {
 	pool *pgxpool.Pool
 }
 
- var DB = db{}
+var DB = db{}
 
 func newDb(l *slog.Logger) (error) {
 	url := "postgresql://" + user + ":" + password + "@" + host + ":" + strconv.Itoa(port) + "/" + dbname

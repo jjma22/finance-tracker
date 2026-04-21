@@ -14,16 +14,18 @@ import (
 	"github.com/jjma22/finance-tracker.git/internal/service"
 )
 
+// Define type finance server
 type financeServer struct {
 	l *slog.Logger
 }
 
-func FinanceNewServer(l *slog.Logger) *financeServer{
+// Function to return new type finance server with logger
+func FinanceNewServer(l *slog.Logger) *financeServer {
 	return &financeServer{l}
 }
 
-
-func (f*financeServer) GetBudget(rw http.ResponseWriter, r*http.Request) {
+// Handler to return monthly budget
+func (f *financeServer) GetBudget(rw http.ResponseWriter, r *http.Request) {
 	mb, err := service.GetBudget()
 
 	if err != nil {
@@ -42,15 +44,21 @@ func (f*financeServer) GetBudget(rw http.ResponseWriter, r*http.Request) {
 
 }
 
-func (f*financeServer) UpdateBudget(rw http.ResponseWriter, r*http.Request) {
+// Handler to update monthly budget
+func (f *financeServer) UpdateBudget(rw http.ResponseWriter, r *http.Request) {
+
 	var mb data.Budget
 	f.l.Info("Updating budget")
+
+	// Decode request body into mb
 	err := json.NewDecoder(r.Body).Decode(&mb)
 	if err != nil {
 		f.l.Error(err.Error())
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Update monthly budget
 	err = data.UpdateBudget(mb.Budget)
 
 	if err != nil {
@@ -59,11 +67,11 @@ func (f*financeServer) UpdateBudget(rw http.ResponseWriter, r*http.Request) {
 		return
 	}
 	f.l.Info("Budget updated")
-	
 
 }
 
-func (f*financeServer) GetExpenses(rw http.ResponseWriter, r*http.Request) {
+// Handler to return all expenses
+func (f *financeServer) GetExpenses(rw http.ResponseWriter, r *http.Request) {
 	f.l.Info("Getting expenses")
 	ge := data.GetExpenses()
 	// ge := database.GetExpense
@@ -74,21 +82,27 @@ func (f*financeServer) GetExpenses(rw http.ResponseWriter, r*http.Request) {
 	}
 	rw.Write(resp)
 
-
 }
 
-func (f*financeServer) GetExpense(rw http.ResponseWriter, r*http.Request) {
+// Handler to return specific expenses
+func (f *financeServer) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	f.l.Info("Getting expenses")
+
+	// Take id from URL path
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		f.l.Error("Error getting id from path value", "error", err)
 		http.Error(rw, "Invalid request", http.StatusBadRequest)
 	}
+
+	// Get expense from database via id
 	exp, err := database.GetExpense(id)
 	if err != nil {
-			f.l.Error("Error retrieving expense", "error", err)
-			http.Error(rw, "Could not retrieve expense", http.StatusInternalServerError)
-		}
+		f.l.Error("Error retrieving expense", "error", err)
+		http.Error(rw, "Could not retrieve expense", http.StatusInternalServerError)
+	}
+
+	// convert expense into byte slice
 	resp, err := json.Marshal(exp)
 	if err != nil {
 		f.l.Error("Error getting expenses", "error", err)
@@ -96,11 +110,12 @@ func (f*financeServer) GetExpense(rw http.ResponseWriter, r*http.Request) {
 	}
 	rw.Write(resp)
 
-
 }
- 
-func (f*financeServer) ExpenseFromJSON(r*http.Request) (error, *data.Expense) {
+
+// Function on the financeserver to convert request body to Expense
+func (f *financeServer) ExpenseFromJSON(r *http.Request) (error, *data.Expense) {
 	var e data.Expense
+	// Read request into e
 	err := json.NewDecoder(r.Body).Decode(&e)
 	if err != nil {
 		f.l.Error(err.Error())
@@ -110,24 +125,19 @@ func (f*financeServer) ExpenseFromJSON(r*http.Request) (error, *data.Expense) {
 	return nil, &e
 }
 
-func (f*financeServer) ExpenseToJSON(r*http.Request) (*data.Expense, error) {
-	var exp data.Expense
-	err := json.NewDecoder(r.Body).Decode(&exp)
-	if err != nil {
-		return nil, err
+// Function to add expense to expenses db
+func (f *financeServer) AddExpense(rw http.ResponseWriter, r *http.Request) {
 
-	}
-	return &exp, nil
-
-}
-
-
-func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 	f.l.Info("Adding new expense")
+
+	// Gets expense from middleware forwarded requests
 	e := r.Context().Value(Keyexpense{}).(*data.Expense)
 
+	// Set update date and time
 	e.DateAdded = time.Now().Truncate(time.Second)
 	e.LastUpdate = time.Now().Truncate(time.Second)
+
+	// Add expense into db
 	err := database.AddExpense(e)
 
 	if err != nil {
@@ -139,42 +149,51 @@ func (f*financeServer) AddExpense(rw http.ResponseWriter, r*http.Request) {
 	rw.WriteHeader(201)
 }
 
-func (f*financeServer) UpdateExpense( rw http.ResponseWriter, r*http.Request) {
+func (f *financeServer) UpdateExpense(rw http.ResponseWriter, r *http.Request) {
 	f.l.Info("Updating expense")
-
-	exp, err := f.ExpenseToJSON(r)
+	// Return type expense from request body
+	err, exp := f.ExpenseFromJSON(r)
 
 	if err != nil {
 		slog.Error("Issue decoding request body -", "error", err)
 		http.Error(rw, "Issue decoding request", http.StatusInternalServerError)
 	}
 
+	//Convert id from URL path to int
 	exp.ID, _ = strconv.Atoi(r.PathValue("id"))
+
+	// Update expense in db
 	err = data.UpdateExpense(exp)
 	if err != nil {
 		f.l.Error(err.Error())
 	}
-	
+
 }
 
-func (f*financeServer)DeleteExpense(rw http.ResponseWriter, r * http.Request) {
+// Function to delete expense from db
+func (f *financeServer) DeleteExpense(rw http.ResponseWriter, r *http.Request) {
 
-		ID, _ := strconv.Atoi(r.PathValue("id"))
-		rows, err := database.DeleteExpense(ID)
-		if err != nil {
-			f.l.Error(err.Error())
-			http.Error(rw, "Failed to delete expense", http.StatusInternalServerError)
-			return
-		}
-		if rows == 0 {
-			f.l.Error("Cannot delete, ID does not exisit")
-			http.Error(rw, "ID not found, cannot delete", http.StatusNotFound)
-			return
-		}
-		f.l.Info("Expense delete", "ID", ID)
+	// Get id from URL path
+	ID, _ := strconv.Atoi(r.PathValue("id"))
+
+	// DB query to delete expeense
+	// if no rows are changed, rows = 0
+	rows, err := database.DeleteExpense(ID)
+	if err != nil {
+		f.l.Error(err.Error())
+		http.Error(rw, "Failed to delete expense", http.StatusInternalServerError)
+		return
+	}
+	if rows == 0 {
+		f.l.Error("Cannot delete, ID does not exisit")
+		http.Error(rw, "ID not found, cannot delete", http.StatusNotFound)
+		return
+	}
+	f.l.Info("Expense delete", "ID", ID)
 }
 
-func (f*financeServer)GetTotalExpense(rw http.ResponseWriter, r *http.Request) {
+// Function to return total current expenses
+func (f *financeServer) GetTotalExpense(rw http.ResponseWriter, r *http.Request) {
 	f.l.Info("Getting total expenses")
 
 	t, err := database.GetTotal()
@@ -182,17 +201,21 @@ func (f*financeServer)GetTotalExpense(rw http.ResponseWriter, r *http.Request) {
 		f.l.Error("Error getting total expenses")
 		http.Error(rw, "Errror getting total expenses", http.StatusInternalServerError)
 	}
-	//rw.Write(Float32ToByte(float32(val)))
-	en := json.NewEncoder(rw)
-	en.Encode(t)
 
+	// en is new encoder that writes to rw Response writer
+	en := json.NewEncoder(rw)
+	// Writes JSON encoded of t to stream
+	en.Encode(t)
 
 }
 
+// Key for context in middleware
 type Keyexpense struct{}
 
-func (f*financeServer) MiddleWareValidateExpense(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, r*http.Request) {
+// Middleware to validate new expense
+func (f *financeServer) MiddleWareValidateExpense(next http.Handler) http.Handler {
+	// Annonymous function to validate expense before passing request onto next handler
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		err, expense := f.ExpenseFromJSON(r)
 		if err != nil {
 			f.l.Error("MW - Error deserialzing product")
@@ -200,20 +223,24 @@ func (f*financeServer) MiddleWareValidateExpense(next http.Handler) http.Handler
 			return
 		}
 
+		// Function to validate expeense
 		err = expense.Validate()
 		if err != nil {
 			f.l.Error("MW - Error validating expense")
 			http.Error(
-				rw, 
-				fmt.Sprintf("Error validating expense: %s", err), 
+				rw,
+				fmt.Sprintf("Error validating expense: %s", err),
 				http.StatusBadRequest,
 			)
 			return
 		}
+
+		// Add key with expense to context
+		// May be incorrect, original request should already contain request so should it be decoded again??
 		ctx := context.WithValue(r.Context(), Keyexpense{}, expense)
 		r = r.WithContext(ctx)
 
+		// calls next handler passed in as next, currently AddExpense
 		next.ServeHTTP(rw, r)
 	})
 }
-
