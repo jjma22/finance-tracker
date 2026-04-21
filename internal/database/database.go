@@ -21,15 +21,14 @@ const (
 	dbname   = "expenses"
 )
 
-
 type db struct {
-	l *slog.Logger
+	l    *slog.Logger
 	pool *pgxpool.Pool
 }
 
 var DB = db{}
 
-func newDb(l *slog.Logger) (error) {
+func newDb(l *slog.Logger) error {
 	url := "postgresql://" + user + ":" + password + "@" + host + ":" + strconv.Itoa(port) + "/" + dbname
 	config, err := pgxpool.ParseConfig(url)
 	if err != nil {
@@ -37,10 +36,9 @@ func newDb(l *slog.Logger) (error) {
 		return err
 	}
 	config.MaxConns = 4
-	config.MinConns = 0 
+	config.MinConns = 0
 	config.MaxConnIdleTime = time.Minute * 5
 	config.HealthCheckPeriod = time.Minute * 1
-
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
@@ -52,20 +50,20 @@ func newDb(l *slog.Logger) (error) {
 	return nil
 }
 
-//Func to try connection to db multiple times. Panics after tring 3 times
-func InitDb(l *slog.Logger) () {
-		i := 0
-			for i < 2 {
+// Func to try connection to db multiple times. Panics after tring 3 times
+func InitDb(l *slog.Logger) {
+	i := 0
+	for i < 2 {
 		err := newDb(l)
-		
+
 		if err == nil {
 			DB.l.Info("Successfully established database connection")
-			break;
+			break
 		}
 
 		slog.Error("Error to connect to db, trying again")
 		time.Sleep(5 * time.Second)
-		
+
 		i++
 
 		if i == 2 {
@@ -98,7 +96,7 @@ func GetTotal() (float32, error) {
 			return 0, err
 		}
 		//convert type string (from db) to float32
-		i,_ := strconv.ParseFloat(n, 32)
+		i, _ := strconv.ParseFloat(n, 32)
 		f := float32(i)
 		sum += f
 	}
@@ -109,16 +107,49 @@ func GetTotal() (float32, error) {
 	return sum, nil
 }
 
-
 // temp object - will remove once date columns are updated to time type on data.Expense Struct
 type tempExpense struct {
-	ID    int `json:"id"`
-	Name  string `json:"name" validate:"required"`
+	ID   int    `json:"id"`
+	Name string `json:"name" validate:"required"`
 	// Type  string `json:"type"`
-	Price float32 `json:"price" validate:"gt=0"`
-	SKU string `json:"sku" validate:"required,sku"`
+	Price      float32    `json:"price" validate:"gt=0"`
+	SKU        string     `json:"sku" validate:"required,sku"`
 	DateAdded  *time.Time `json:"-"`
 	LastUpdate *time.Time `json:"-"`
+}
+
+// Fucntion to return all expenses from database
+func GetExpenses() (*data.Expenses, error) {
+	DB.l.Info("Getting all expenses from database")
+	// Get all ids from expense
+	rows, err := DB.pool.Query(context.Background(), "select id from expenses")
+	if err != nil {
+		DB.l.Error("Failed querying database", "error", err)
+		return nil, err
+	}
+
+	// Scan all ids into slice
+	r, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (int, error) {
+		var n int
+		err := row.Scan(&n)
+		return n, err
+	})
+
+	expenses := data.Expenses{}
+
+	// Add expense into expenses for each id
+	for _, id := range r {
+		e, err := GetExpense(id)
+
+		if err != nil {
+			return nil, err
+		}
+
+		expenses = append(expenses, e)
+
+	}
+
+	return &expenses, nil
 }
 
 func GetExpense(id int) (*data.Expense, error) {
@@ -126,8 +157,12 @@ func GetExpense(id int) (*data.Expense, error) {
 	DB.l.Info("Getting (id - needs adding) expenses from database")
 	// Runs query on database
 	row, err := DB.pool.Query(context.Background(), "select * from expenses where id = $1", id)
+	if err != nil {
+		DB.l.Error("Failed querying database", "error", err)
+		return nil, err
+	}
 
-	exp, err :=  pgx.CollectRows(row, pgx.RowToStructByName[tempExpense])
+	exp, err := pgx.CollectRows(row, pgx.RowToStructByName[tempExpense])
 	if err != nil {
 		DB.l.Error("Failed querying row", "error", err)
 		return nil, err
@@ -139,21 +174,20 @@ func GetExpense(id int) (*data.Expense, error) {
 	}
 	if exp[0].LastUpdate == nil {
 		DB.l.Info("Setting Lasttupdate to date added")
-		exp[0].LastUpdate = exp[0].DateAdded 
+		exp[0].LastUpdate = exp[0].DateAdded
 	}
 
-
 	return &data.Expense{
-		ID: exp[0].ID,
-		Name: exp[0].Name,
-		Price: exp[0].Price,
-		SKU: exp[0].SKU,
-		DateAdded: *exp[0].DateAdded,
+		ID:         exp[0].ID,
+		Name:       exp[0].Name,
+		Price:      exp[0].Price,
+		SKU:        exp[0].SKU,
+		DateAdded:  *exp[0].DateAdded,
 		LastUpdate: *exp[0].LastUpdate,
 	}, nil
 }
 
-func AddExpense(e *data.Expense) (error) {
+func AddExpense(e *data.Expense) error {
 	_, err := DB.pool.Exec(context.Background(), "INSERT INTO expenses (name, price, sku, dateadded,lastupdate) Values ($1, $2, $3, $4, $5)",
 		e.Name, e.Price, e.SKU, e.DateAdded, e.LastUpdate)
 
@@ -166,7 +200,7 @@ func AddExpense(e *data.Expense) (error) {
 
 func DeleteExpense(id int) (int, error) {
 	ct, err := DB.pool.Exec(context.Background(), "DELETE FROM expenses WHERE id = $1",
-		id)	
+		id)
 	if err != nil {
 		return 1, err
 	}

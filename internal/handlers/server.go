@@ -73,8 +73,7 @@ func (f *financeServer) UpdateBudget(rw http.ResponseWriter, r *http.Request) {
 // Handler to return all expenses
 func (f *financeServer) GetExpenses(rw http.ResponseWriter, r *http.Request) {
 	f.l.Info("Getting expenses")
-	ge := data.GetExpenses()
-	// ge := database.GetExpense
+	ge, err := database.GetExpenses()
 	resp, err := json.Marshal(ge)
 	if err != nil {
 		f.l.Error("Error getting expenses", "error", err)
