@@ -30,14 +30,13 @@ func main() {
 	sm.HandleFunc("GET /monthlybudget", fh.GetBudget)
 	sm.HandleFunc("PUT /monthlybudget", fh.UpdateBudget)
 
-	sm.HandleFunc("PUT /expense/update/{id}", fh.UpdateExpense)
-
 	// converted to db
+	sm.HandleFunc("GET /expense/total", fh.GetTotalExpense)
 	sm.HandleFunc("GET /expense/{id}", fh.GetExpense)
 	sm.HandleFunc("GET /expense", fh.GetExpenses)
 	sm.Handle("POST /expense", fh.MiddleWareValidateExpense(http.HandlerFunc(fh.AddExpense)))
+	sm.HandleFunc("PUT /expense/update/{id}", fh.UpdateExpense)
 	sm.HandleFunc("DELETE /expense/delete/{id}", fh.DeleteExpense)
-	sm.HandleFunc("GET /expense/total", fh.GetTotalExpense)
 
 	//Remove 127.0.0.1 when deploying to Docker, causes issues on local firewall without
 	serverPort := "127.0.0.1:9090"

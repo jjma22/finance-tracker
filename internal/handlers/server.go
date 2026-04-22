@@ -162,9 +162,10 @@ func (f *financeServer) UpdateExpense(rw http.ResponseWriter, r *http.Request) {
 	exp.ID, _ = strconv.Atoi(r.PathValue("id"))
 
 	// Update expense in db
-	err = data.UpdateExpense(exp)
+	err = database.UpdateExpense(exp)
 	if err != nil {
 		f.l.Error(err.Error())
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
 
 }

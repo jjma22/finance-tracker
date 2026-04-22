@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -211,5 +212,66 @@ func DeleteExpense(id int) (int, error) {
 	}
 
 	return 1, nil
+
+}
+
+func UpdateExpense(e *data.Expense) error {
+	// search fields to check if id exists
+	row, err := DB.pool.Query(context.Background(), "select id from expenses where id = $1", e.ID)
+	if err != nil {
+		DB.l.Error("Failed querying database", "error", err)
+		return err
+	}
+
+	i, err := pgx.CollectRows(row, pgx.RowTo[int])
+	if err != nil {
+		DB.l.Error("Failed querying row", "error", err)
+		return err
+	}
+
+	if len(i) == 0 {
+		return errors.New("Invalid ID")
+	}
+
+	sId := strconv.Itoa(i[0])
+
+	if e.Price != 0 {
+		// Need to add validation for prices (not minus number, not string)
+		lastUpdate := time.Now().Truncate(time.Second)
+		DB.l.Info("Updating price for expense", "id", sId)
+		u, err := DB.pool.Exec(context.Background(),
+			"UPDATE expenses SET price = $1, lastupdate = $2  WHERE id = $3",
+			e.Price, lastUpdate, sId)
+
+		if err != nil {
+			return err
+		}
+
+		// return 0 if no rows updated (id not found)
+		if u.RowsAffected() == 0 {
+			return errors.New("Dabatse update failed")
+		}
+
+	}
+
+	if e.Name != "" {
+		// Need to add validation for Name (not minus number, not string)
+		lastUpdate := time.Now().Truncate(time.Second)
+		DB.l.Info("Updating name for expense", "id", sId)
+		u, err := DB.pool.Exec(context.Background(),
+			"UPDATE expenses SET name = $1, lastupdate = $2  WHERE id = $3",
+			e.Name, lastUpdate, sId)
+
+		if err != nil {
+			return err
+		}
+
+		// return 0 if no rows updated (id not found)
+		if u.RowsAffected() == 0 {
+			return errors.New("Dabatse update failed")
+		}
+
+	}
+	return nil
 
 }

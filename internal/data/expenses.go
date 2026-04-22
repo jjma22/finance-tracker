@@ -2,7 +2,6 @@ package data
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 	"slices"
 	"time"
@@ -11,24 +10,24 @@ import (
 )
 
 type Expense struct {
-	ID    int `json:"id"`
-	Name  string `json:"name" validate:"required"`
+	ID   int    `json:"id"`
+	Name string `json:"name" validate:"required"`
 	// Type  string `json:"type"`
-	Price float32 `json:"price" validate:"gt=0"`
-	SKU string `json:"sku" validate:"required,sku"`
+	Price      float32   `json:"price" validate:"gt=0"`
+	SKU        string    `json:"sku" validate:"required,sku"`
 	DateAdded  time.Time `json:"-"`
 	LastUpdate time.Time `json:"-"`
 }
 
 type Expenses []*Expense
 
-//Simply func but easier to rewrite
-//once database is added
-func GetExpenses() Expenses{
+// Simply func but easier to rewrite
+// once database is added
+func GetExpenses() Expenses {
 	return MonthlyExpenses
 }
 
-func (e*Expense) Validate() error {
+func (e *Expense) Validate() error {
 	validate := validator.New()
 	validate.RegisterValidation("sku", validateSKU)
 	return validate.Struct(e)
@@ -36,7 +35,7 @@ func (e*Expense) Validate() error {
 }
 
 func validateSKU(fl validator.FieldLevel) bool {
-	re :=  regexp.MustCompile(`[a-z]+-[a-z]+-[a-z]+`)
+	re := regexp.MustCompile(`[a-z]+-[a-z]+-[a-z]+`)
 	matches := re.FindAllString(fl.Field().String(), -1)
 
 	if len(matches) != 1 {
@@ -50,7 +49,6 @@ func validateSKU(fl validator.FieldLevel) bool {
 	return true
 }
 
-
 var MonthlyExpenses = Expenses{}
 
 // Module to search if field value already exisits
@@ -59,7 +57,7 @@ func (Expense) SearchFields(f any, v any) (bool, error) {
 	// Create array of values from specific field
 	var currentValues []any
 	for _, expense := range MonthlyExpenses {
-		switch f{
+		switch f {
 		case "Name":
 			currentValues = append(currentValues, expense.Name)
 		case "ID":
@@ -78,21 +76,22 @@ func (Expense) SearchFields(f any, v any) (bool, error) {
 	}
 }
 
-func UpdateExpense(e *Expense) error {
-	v, err := e.SearchFields("ID", e.ID)
-	if err != nil {
-		return errors.New("Error searching for ID")
-	}
-	if v == false {
-		return errors.New("ID does not exist")
-	}
-	fmt.Println("Expense found, updating")
-	fmt.Println(e.Price)
-	MonthlyExpenses[(e.ID - 1)].Price = e.Price
-	//MonthlyExpenses[(e.ID - 1)].LastUpdate = time.Now().Truncate(time.Second).Format("2006-01-02 15:04:05")
-	return nil
+// No longer used sinced migrated to db
+// func UpdateExpense(e *Expense) error {
+// 	v, err := e.SearchFields("ID", e.ID)
+// 	if err != nil {
+// 		return errors.New("Error searching for ID")
+// 	}
+// 	if v == false {
+// 		return errors.New("Invalid ID")
+// 	}
+// 	fmt.Println("Expense found, updating")
+// 	fmt.Println(e.Price)
+// 	MonthlyExpenses[(e.ID - 1)].Price = e.Price
+// 	//MonthlyExpenses[(e.ID - 1)].LastUpdate = time.Now().Truncate(time.Second).Format("2006-01-02 15:04:05")
+// 	return nil
 
-}
+// }
 
 func DeleteExpense(i int) error {
 	var e Expense
@@ -105,7 +104,7 @@ func DeleteExpense(i int) error {
 		return errors.New("ID does not exist")
 	}
 
-	MonthlyExpenses = slices.Delete(MonthlyExpenses, (i-1), i)
+	MonthlyExpenses = slices.Delete(MonthlyExpenses, (i - 1), i)
 	return nil
 
 }
