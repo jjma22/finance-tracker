@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-playground/validator"
 	"github.com/jjma22/finance-tracker.git/internal/data"
 	"github.com/jjma22/finance-tracker.git/internal/database"
 )
@@ -16,11 +17,13 @@ import (
 // Define type finance server
 type financeServer struct {
 	l *slog.Logger
+	// add in a validator here so a new one is not created in memory for each request
+	v *validator.Validate
 }
 
 // Function to return new type finance server with logger
 func FinanceNewServer(l *slog.Logger) *financeServer {
-	return &financeServer{l}
+	return &financeServer{l, validator.New()}
 }
 
 // Function on the financeserver to convert request body to Expense

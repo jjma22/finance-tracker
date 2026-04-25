@@ -1,5 +1,5 @@
 package data
 
 type Budget struct {
-	Budget int `json:"budget"`
+	Budget int `json:"budget" validate:"gt=0"`
 }

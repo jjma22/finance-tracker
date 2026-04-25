@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -21,14 +23,8 @@ func (f *financeServer) BudgetFromJSON(r *http.Request) (*data.Budget, error) {
 }
 
 func (f *financeServer) SetBudget(rw http.ResponseWriter, r *http.Request) {
-	f.l.Info("Setting new budget")
-	b, err := f.BudgetFromJSON(r)
-	if err != nil {
-		f.l.Error("Error decoding budget", "error", err)
-		http.Error(rw, "Error occured setting budget", http.StatusInternalServerError)
-	}
-
-	err = database.SetBudget(b.Budget)
+	b := r.Context().Value(Budget{}).(*data.Budget)
+	err := database.SetBudget(b.Budget)
 
 	if err != nil {
 		f.l.Error("Error setting new budget in databse", "err", err)
@@ -96,4 +92,42 @@ func (f *financeServer) UpdateBudget(rw http.ResponseWriter, r *http.Request) {
 	}
 	f.l.Info("Budget updated")
 
+}
+
+type Budget struct{}
+
+// Middleware to validate new expense
+func (f *financeServer) MiddleWareValidateBudget(next http.Handler) http.Handler {
+	// Annonymous function to validate budget before passing request onto next handler
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+
+		b, err := f.BudgetFromJSON(r)
+		if err != nil {
+			f.l.Error("MW - Error deserialzing product")
+			http.Error(rw, "Error reading product", http.StatusBadRequest)
+			return
+		}
+
+		f.l.Info("Validating new budget")
+		// Function to validate expeense
+		err = f.v.Struct(b)
+		if err != nil {
+			f.l.Error("MW - Error validating budget", "error", err)
+			http.Error(
+				rw,
+				fmt.Sprintf("Error validating budget: %s", err),
+				http.StatusBadRequest,
+			)
+			return
+		}
+
+		// Add key with expense to context
+		// May be incorrect, original request should already contain request so should it be decoded again??
+		f.l.Info("Passing budget to next hanler")
+		ctx := context.WithValue(r.Context(), Budget{}, b)
+		r = r.WithContext(ctx)
+
+		// calls next handler passed in as next, currently AddExpense
+		next.ServeHTTP(rw, r)
+	})
 }
