@@ -26,9 +26,9 @@ func main() {
 	// Initialise new ServerMux
 	sm := http.NewServeMux()
 	//Register handler functions for pattern / request
-
-	sm.HandleFunc("GET /monthlybudget", fh.GetBudget)
-	sm.HandleFunc("PUT /monthlybudget", fh.UpdateBudget)
+	sm.HandleFunc("POST /monthlybudget", fh.SetBudget)
+	sm.HandleFunc("GET /monthlybudget/{id}", fh.GetBudget)
+	sm.HandleFunc("PUT /monthlybudget/{id}", fh.UpdateBudget)
 
 	// converted to db
 	sm.HandleFunc("GET /expense/total", fh.GetTotalExpense)

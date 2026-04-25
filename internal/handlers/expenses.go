@@ -11,7 +11,6 @@ import (
 
 	"github.com/jjma22/finance-tracker.git/internal/data"
 	"github.com/jjma22/finance-tracker.git/internal/database"
-	"github.com/jjma22/finance-tracker.git/internal/service"
 )
 
 // Define type finance server
@@ -24,50 +23,17 @@ func FinanceNewServer(l *slog.Logger) *financeServer {
 	return &financeServer{l}
 }
 
-// Handler to return monthly budget
-func (f *financeServer) GetBudget(rw http.ResponseWriter, r *http.Request) {
-	mb, err := service.GetBudget()
-
-	if err != nil {
-		f.l.Error("Error calling data.GetBudget")
-		http.Error(rw, "Unable to get monthly budget", http.StatusInternalServerError)
-	}
-
-	d, err := json.Marshal(mb)
-	if err != nil {
-		f.l.Error("Unable to marhshal budget")
-		http.Error(rw, "Unable to get monthly budget", http.StatusInternalServerError)
-	}
-
-	f.l.Info("Returning current budget")
-	rw.Write(d)
-
-}
-
-// Handler to update monthly budget
-func (f *financeServer) UpdateBudget(rw http.ResponseWriter, r *http.Request) {
-
-	var mb data.Budget
-	f.l.Info("Updating budget")
-
-	// Decode request body into mb
-	err := json.NewDecoder(r.Body).Decode(&mb)
+// Function on the financeserver to convert request body to Expense
+func (f *financeServer) ExpenseFromJSON(r *http.Request) (error, *data.Expense) {
+	var e data.Expense
+	// Read request into e
+	err := json.NewDecoder(r.Body).Decode(&e)
 	if err != nil {
 		f.l.Error(err.Error())
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
+		return err, nil
 	}
-
-	// Update monthly budget
-	err = data.UpdateBudget(mb.Budget)
-
-	if err != nil {
-		f.l.Error(err.Error())
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	f.l.Info("Budget updated")
-
+	fmt.Println(e)
+	return nil, &e
 }
 
 // Handler to return all expenses
@@ -109,19 +75,6 @@ func (f *financeServer) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	}
 	rw.Write(resp)
 
-}
-
-// Function on the financeserver to convert request body to Expense
-func (f *financeServer) ExpenseFromJSON(r *http.Request) (error, *data.Expense) {
-	var e data.Expense
-	// Read request into e
-	err := json.NewDecoder(r.Body).Decode(&e)
-	if err != nil {
-		f.l.Error(err.Error())
-		return err, nil
-	}
-	fmt.Println(e)
-	return nil, &e
 }
 
 // Function to add expense to expenses db
@@ -208,6 +161,8 @@ func (f *financeServer) GetTotalExpense(rw http.ResponseWriter, r *http.Request)
 	en.Encode(t)
 
 }
+
+// Middleware
 
 // Key for context in middleware
 type Keyexpense struct{}
