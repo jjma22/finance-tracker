@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/go-playground/validator"
-	"github.com/jjma22/finance-tracker.git/internal/data"
-	"github.com/jjma22/finance-tracker.git/internal/database"
+	"github.com/jjma22/finance-tracker/internal/data"
+	"github.com/jjma22/finance-tracker/internal/database"
 )
 
 // Define type finance server

@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/jjma22/finance-tracker.git/internal/database"
-	"github.com/jjma22/finance-tracker.git/internal/handlers"
+	"github.com/jjma22/finance-tracker/internal/database"
+	"github.com/jjma22/finance-tracker/internal/handlers"
 )
 
 func main() {

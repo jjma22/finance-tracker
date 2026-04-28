@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/jjma22/finance-tracker.git/internal/data"
-	"github.com/jjma22/finance-tracker.git/internal/database"
+	"github.com/jjma22/finance-tracker/internal/data"
+	"github.com/jjma22/finance-tracker/internal/database"
 )
 
 func (f *financeServer) BudgetFromJSON(r *http.Request) (*data.Budget, error) {
