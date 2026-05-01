@@ -28,7 +28,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        # map container port to host
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
@@ -44,5 +43,8 @@ jobs:
     - name: Build
       run: go build -v ./...
 
+    - name: Set up Postgres
+      run: go run ./.github/workflows/db-migrate.go
+      
     - name: Test
       run: go test -v ./...
