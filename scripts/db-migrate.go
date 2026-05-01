@@ -66,13 +66,13 @@ func main() {
 
 	newDb(host, port, user, pw, db)
 
-	_, err = DB.pool.Exec(context.Background(), "USE expenses CREATE TABLE expenses  (id SERIAL PRIMARY KEY, name VARCHAR(255),	price NUMERIC, sku VARCHAR(255), dateadded timestamptz, lastupdate timestamptz)")
+	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE expenses  (id SERIAL PRIMARY KEY, name VARCHAR(255),	price NUMERIC, sku VARCHAR(255), dateadded timestamptz, lastupdate timestamptz)")
 	if err != nil {
 		fmt.Printf("Error creating expenses table", err)
 		os.Exit(1)
 	}
 
-	_, err = DB.pool.Exec(context.Background(), "USE expenses CREATE TABLE budget  (id SERIAL PRIMARY KEY, budget NUMERIC, dateadded timestamptz, lastupdate timestamptz)")
+	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE budget  (id SERIAL PRIMARY KEY, budget NUMERIC, dateadded timestamptz, lastupdate timestamptz)")
 	if err != nil {
 		fmt.Printf("Error creating budget table", err)
 		os.Exit(1)
