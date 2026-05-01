@@ -101,7 +101,7 @@ func TestPUTBudget(t *testing.T) {
 		// Manualy inject path
 		request.SetPathValue("id", "1")
 		fh := handlers.FinanceNewServer(l)
-		fh.GetBudget(response, request)
+		fh.UpdateBudget(response, request)
 
 		want := 200
 		got := response.Code
@@ -111,13 +111,15 @@ func TestPUTBudget(t *testing.T) {
 
 		// Check id 1 budget has updated
 		request, _ = http.NewRequest(http.MethodGet, "/monthlybudget/1", nil)
+		// Manualy inject path
+		request.SetPathValue("id", "1")
 		fh.GetBudget(response, request)
 
 		var gotBudget data.Budget
 		err = json.NewDecoder(response.Body).Decode(&gotBudget)
 
 		if err != nil {
-			t.Fatalf("Unable to parse response from server %d into budgret, '%v'", response.Body, err)
+			t.Fatalf("Unable to parse response from server %d into budget, '%v'", response.Body, err)
 		}
 		want = 1500
 
