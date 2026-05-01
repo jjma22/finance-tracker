@@ -27,7 +27,7 @@ func TestPOSTBudget(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Unable to parse budget from client %d , '%v'", b, err)
 		}
-		request, _ := http.NewRequest(http.MethodGet, "/monthlybudget", bytes.NewReader(b))
+		request, _ := http.NewRequest(http.MethodPost, "/monthlybudget", bytes.NewReader(b))
 		response := httptest.NewRecorder()
 		l := slog.Default()
 		// may be worth looking https://golang.testcontainers.org/

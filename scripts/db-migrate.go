@@ -2,20 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-)
-
-const (
-	host     = "127.0.0.1"
-	port     = 5432
-	user     = "postgres"
-	password = "postgres"
-	dbname   = "postgres"
 )
 
 type db struct {
@@ -60,7 +51,7 @@ func main() {
 	// Create expenses table
 	_, err := DB.pool.Exec(context.Background(), "CREATE DATABASE expenses WITH  OWNER = postgres")
 	if err != nil {
-		fmt.Printf("Error creating expenses database", err)
+		slog.Error("Error creating expenses database", "error", err)
 		os.Exit(1)
 	}
 
@@ -68,13 +59,13 @@ func main() {
 
 	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE expenses  (id SERIAL PRIMARY KEY, name VARCHAR(255),	price NUMERIC, sku VARCHAR(255), dateadded timestamptz, lastupdate timestamptz)")
 	if err != nil {
-		fmt.Printf("Error creating expenses table", err)
+		slog.Error("Error creating expenses table", "error", err)
 		os.Exit(1)
 	}
 
 	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE budget  (id SERIAL PRIMARY KEY, budget NUMERIC, dateadded timestamptz, lastupdate timestamptz)")
 	if err != nil {
-		fmt.Printf("Error creating budget table", err)
+		slog.Error("Error creating budget table", "error", err)
 		os.Exit(1)
 	}
 
