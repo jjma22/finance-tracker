@@ -49,11 +49,11 @@ func newDb(h string, pr string, u string, pw string, d string) error {
 
 func main() {
 
-	host := os.Getenv("DB_host")
-	port := os.Getenv("DB_port")
-	user := os.Getenv("DB_user")
-	pw := os.Getenv("DB_pw")
-	db := os.Getenv("DB_name")
+	host := os.Getenv("ACTIONS_DB_host")
+	port := os.Getenv("ACTIONS_DB_port")
+	user := os.Getenv("ACTIONS_DB_user")
+	pw := os.Getenv("ACTIONS_DB_pw")
+	db := os.Getenv("ACTIONS_DB_name")
 
 	newDb(host, port, user, pw, "postgres")
 

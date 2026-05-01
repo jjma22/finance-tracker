@@ -46,11 +46,12 @@ jobs:
     - name: Set up Postgres
       run: go run ./scripts/db-migrate.go
       env:
-        DB_host: "postgres"
-        DB_port: "5432"
-        DB_user: "postgres"
-        DB_pw: "postgres"
-        DB_name: "expenses"
+        # Values used to init db in db-migrate.go
+        ACTIONS_DB_host: "localhost"
+        ACTIONS_DB_port: "5432"
+        ACTIONS_DB_user: "postgres"
+        ACTIONS_DB_pw: "postgres"
+        ACTIONS_DB_name: "expenses"
 
 
     - name: Test
