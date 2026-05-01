@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -20,22 +21,31 @@ import (
 func TestPOSTBudget(t *testing.T) {
 	t.Run("sets budget", func(t *testing.T) {
 
-		b, err := json.Marshal(&data.Budget{
+		b := &data.Budget{
+			Budget: 1000,
+		}
+
+		en, err := json.Marshal(&data.Budget{
 			Budget: 1000,
 		})
 
 		if err != nil {
 			t.Fatalf("Unable to parse budget from client %d , '%v'", b, err)
 		}
-		request, _ := http.NewRequest(http.MethodPost, "/monthlybudget", bytes.NewReader(b))
+		request, _ := http.NewRequest(http.MethodPost, "/monthlybudget", bytes.NewReader(en))
 		response := httptest.NewRecorder()
 		l := slog.Default()
-		// may be worth looking https://golang.testcontainers.org/
+
 		database.InitDb(l)
 		// Manualy inject path
 		request.SetPathValue("id", "1")
 		fh := handlers.FinanceNewServer(l)
-		fh.GetBudget(response, request)
+
+		// Set context due to middleware
+		ctx := context.WithValue(request.Context(), handlers.Budget{}, b)
+		request = request.WithContext(ctx)
+
+		fh.SetBudget(response, request)
 
 		want := 200
 		got := response.Code
