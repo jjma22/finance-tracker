@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -16,7 +15,7 @@ const (
 	port     = 5432
 	user     = "postgres"
 	password = "postgres"
-	dbname   = "expenses"
+	dbname   = "postgres"
 )
 
 type db struct {
@@ -25,8 +24,8 @@ type db struct {
 
 var DB = db{}
 
-func newDb() error {
-	url := "postgresql://" + user + ":" + password + "@" + host + ":" + strconv.Itoa(port) + "/" + dbname + "?sslmode=disable"
+func newDb(h string, pr string, u string, pw string, d string) error {
+	url := "postgresql://" + u + ":" + pw + "@" + h + ":" + pr + "/" + d + "?sslmode=disable"
 	config, err := pgxpool.ParseConfig(url)
 	if err != nil {
 		slog.Error("Could not connect to database -", "Error", err)
@@ -49,7 +48,14 @@ func newDb() error {
 // Run migrations on test database
 
 func main() {
-	newDb()
+
+	host := os.Getenv("DB_host")
+	port := os.Getenv("DB_port")
+	user := os.Getenv("DB_user")
+	pw := os.Getenv("DB_pw")
+	db := os.Getenv("DB_name")
+
+	newDb(host, port, user, pw, "postgres")
 
 	// Create expenses table
 	_, err := DB.pool.Exec(context.Background(), "CREATE DATABASE expenses WITH  OWNER = postgres")
@@ -58,13 +64,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE expenses  (id SERIAL PRIMARY KEY, name VARCHAR(255),	price NUMERIC, sku VARCHAR(255), dateadded timestamptz, lastupdate timestamptz)")
+	newDb(host, port, user, pw, db)
+
+	_, err = DB.pool.Exec(context.Background(), "USE expenses CREATE TABLE expenses  (id SERIAL PRIMARY KEY, name VARCHAR(255),	price NUMERIC, sku VARCHAR(255), dateadded timestamptz, lastupdate timestamptz)")
 	if err != nil {
 		fmt.Printf("Error creating expenses table", err)
 		os.Exit(1)
 	}
 
-	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE budget  (id SERIAL PRIMARY KEY, budget NUMERIC, dateadded timestamptz, lastupdate timestamptz)")
+	_, err = DB.pool.Exec(context.Background(), "USE expenses CREATE TABLE budget  (id SERIAL PRIMARY KEY, budget NUMERIC, dateadded timestamptz, lastupdate timestamptz)")
 	if err != nil {
 		fmt.Printf("Error creating budget table", err)
 		os.Exit(1)
