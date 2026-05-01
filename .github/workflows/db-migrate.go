@@ -1,4 +1,4 @@
-packge github-actions
+package github-actions
 
 const (
 	host     = "localhost"
