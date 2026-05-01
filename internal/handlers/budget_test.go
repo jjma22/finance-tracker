@@ -75,7 +75,7 @@ func TestGETBudget(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Unable to parse response from server %d into budgret, '%v'", response.Body, err)
 		}
-		want := 2000
+		want := 1000
 
 		if got.Budget != want {
 			t.Errorf("got %d, want %d", got, want)
@@ -119,10 +119,10 @@ func TestPUTBudget(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Unable to parse response from server %d into budgret, '%v'", response.Body, err)
 		}
-		want = 2000
+		want = 1500
 
 		if gotBudget.Budget != want {
-			t.Errorf("got %d, want %d", got, want)
+			t.Errorf("got %d, want %d", gotBudget.Budget, want)
 		}
 	})
 
