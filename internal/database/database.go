@@ -30,7 +30,9 @@ type db struct {
 var DB = db{}
 
 func newDb(l *slog.Logger) error {
-	url := "postgresql://" + user + ":" + password + "@" + host + ":" + strconv.Itoa(port) + "/" + dbname
+
+	// should make ssl mode a flag
+	url := "postgresql://" + user + ":" + password + "@" + host + ":" + strconv.Itoa(port) + "/" + dbname + "?sslmode=disable"
 	config, err := pgxpool.ParseConfig(url)
 	if err != nil {
 		slog.Error("Could not connect to database -", "Error", err)
