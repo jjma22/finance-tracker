@@ -249,7 +249,7 @@ func UpdateExpense(e *data.Expense) error {
 
 		// return 0 if no rows updated (id not found)
 		if u.RowsAffected() == 0 {
-			return errors.New("Dabatse update failed")
+			return errors.New("Dabase update failed")
 		}
 
 	}

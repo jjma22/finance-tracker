@@ -123,10 +123,11 @@ func (f *financeServer) MiddleWareValidateBudget(next http.Handler) http.Handler
 
 		// Add key with expense to context
 		// May be incorrect, original request should already contain request so should it be decoded again??
-		f.l.Info("Passing budget to next hanler")
+		f.l.Info("Passing budget to next handler")
+
 		ctx := context.WithValue(r.Context(), Budget{}, b)
 		r = r.WithContext(ctx)
-
+		fmt.Println(r)
 		// calls next handler passed in as next, currently AddExpense
 		next.ServeHTTP(rw, r)
 	})
