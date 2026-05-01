@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	host     = "localhost"
+	host     = "127.0.0.1"
 	port     = 5432
 	user     = "postgres"
 	password = "postgres"
@@ -26,7 +26,7 @@ type db struct {
 var DB = db{}
 
 func newDb() error {
-	url := "postgresql://" + user + ":" + password + "@" + host + ":" + strconv.Itoa(port) + "/" + dbname
+	url := "postgresql://" + user + ":" + password + "@" + host + ":" + strconv.Itoa(port) + "/" + dbname + "?sslmode=disable"
 	config, err := pgxpool.ParseConfig(url)
 	if err != nil {
 		slog.Error("Could not connect to database -", "Error", err)
