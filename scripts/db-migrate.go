@@ -1,4 +1,15 @@
-package github-actions
+package main
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"os"
+	"strconv"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+)
 
 const (
 	host     = "localhost"
@@ -11,6 +22,8 @@ const (
 type db struct {
 	pool *pgxpool.Pool
 }
+
+var DB = db{}
 
 func newDb() error {
 	url := "postgresql://" + user + ":" + password + "@" + host + ":" + strconv.Itoa(port) + "/" + dbname
@@ -38,33 +51,23 @@ func newDb() error {
 func main() {
 	newDb()
 
-	## Create expenses table
+	// Create expenses table
 	_, err := DB.pool.Exec(context.Background(), "CREATE DATABASE expenses WITH  OWNER = postgres")
 	if err != nil {
 		fmt.Printf("Error creating expenses database", err)
-		os.exit(1)
-	}
-	
-	_, err := DB.pool.Exec(context.Background(), "CREATE TABLE expenses  (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(255),
-		price NUMERIC,
-		sku VARCHAR(255),
-		dateadded timestamptz,
-		lastupdate timestamptz)")
-	if err != nil {
-		fmt.Printf("Error creating expenses table", err)
-		os.exit(1)
+		os.Exit(1)
 	}
 
-	_, err := DB.pool.Exec(context.Background(), "CREATE TABLE budget  (
-		id SERIAL PRIMARY KEY,
-		budget NUMERIC,
-		dateadded timestamptz,
-		lastupdate timestamptz)")
+	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE expenses  (id SERIAL PRIMARY KEY, name VARCHAR(255),	price NUMERIC, sku VARCHAR(255), dateadded timestamptz, lastupdate timestamptz)")
+	if err != nil {
+		fmt.Printf("Error creating expenses table", err)
+		os.Exit(1)
+	}
+
+	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE budget  (id SERIAL PRIMARY KEY, budget NUMERIC, dateadded timestamptz, lastupdate timestamptz)")
 	if err != nil {
 		fmt.Printf("Error creating budget table", err)
-		os.exit(1)
+		os.Exit(1)
 	}
 
 }
