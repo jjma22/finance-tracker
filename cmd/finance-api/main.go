@@ -8,17 +8,22 @@ import (
 	"os/signal"
 	"time"
 
+	env_config "github.com/jjma22/finance-tracker/internal/config"
 	"github.com/jjma22/finance-tracker/internal/database"
 	"github.com/jjma22/finance-tracker/internal/handlers"
 )
 
 func main() {
 
+	Config := *env_config.LoadConfig("./.env")
+
+	db_connection := Config.Database
+
 	// Declare logger
 	l := slog.Default()
 
 	// Setup database connection
-	database.InitDb(l)
+	database.InitDb(l, &db_connection)
 
 	// Declare handler
 	fh := handlers.FinanceNewServer(l)

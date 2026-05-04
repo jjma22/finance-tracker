@@ -11,12 +11,25 @@ import (
 	"strings"
 	"testing"
 
+	env_config "github.com/jjma22/finance-tracker/internal/config"
 	"github.com/jjma22/finance-tracker/internal/data"
 	"github.com/jjma22/finance-tracker/internal/database"
 	"github.com/jjma22/finance-tracker/internal/handlers"
 )
 
 // Using https://quii.gitbook.io/learn-go-with-tests/build-an-application/http-server as source
+
+func initDBTest() {
+	Config := *env_config.LoadConfig("../../.env")
+
+	db_connection := Config.Database
+
+	// Declare logger
+	l := slog.Default()
+
+	// Setup database connection
+	database.InitDb(l, &db_connection)
+}
 
 func TestPOSTBudget(t *testing.T) {
 	t.Run("sets budget", func(t *testing.T) {
@@ -34,9 +47,10 @@ func TestPOSTBudget(t *testing.T) {
 		}
 		request, _ := http.NewRequest(http.MethodPost, "/monthlybudget", bytes.NewReader(en))
 		response := httptest.NewRecorder()
-		l := slog.Default()
 
-		database.InitDb(l)
+		l := slog.Default()
+		initDBTest()
+
 		// Manualy inject path
 		request.SetPathValue("id", "1")
 		fh := handlers.FinanceNewServer(l)
@@ -61,9 +75,9 @@ func TestGETBudget(t *testing.T) {
 	t.Run("returns budget", func(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodGet, "/monthlybudget/1", nil)
 		response := httptest.NewRecorder()
+
 		l := slog.Default()
-		// may be worth looking https://golang.testcontainers.org/
-		database.InitDb(l)
+		initDBTest()
 		// Manualy inject path
 		request.SetPathValue("id", "1")
 		fh := handlers.FinanceNewServer(l)
@@ -95,9 +109,9 @@ func TestPUTBudget(t *testing.T) {
 		}
 		request, _ := http.NewRequest(http.MethodPut, "/monthlybudget/1", bytes.NewReader(b))
 		response := httptest.NewRecorder()
+
 		l := slog.Default()
-		// may be worth looking https://golang.testcontainers.org/
-		database.InitDb(l)
+		initDBTest()
 		// Manualy inject path
 		request.SetPathValue("id", "1")
 		fh := handlers.FinanceNewServer(l)
@@ -136,6 +150,7 @@ func TestBudgetFromJSON(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/monthlybudget", body)
 
 	l := slog.Default()
+
 	fh := handlers.FinanceNewServer(l)
 
 	v, err := fh.BudgetFromJSON(req)

@@ -21,7 +21,7 @@ jobs:
         image: postgres
         # Provide the password for postgres
         env:
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -35,6 +35,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: create .env file
+      run: |
+        touch .env
+        echo DB_host=${{ secrets.DB_HOST }} > .env
+        echo DB_port=${{ secrets.DB_PORT }} >> .env
+        echo DB_user=${{ secrets.DB_USER }} >> .env
+        echo DB_password=${{ secrets.DB_PASSWORD }} >> .env
+        echo DB_name=${{ secrets.DB_NAME }} >> .env
+      
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
@@ -47,11 +56,11 @@ jobs:
       run: go run ./scripts/db-migrate.go
       env:
         # Values used to init db in db-migrate.go
-        ACTIONS_DB_host: "localhost"
-        ACTIONS_DB_port: "5432"
-        ACTIONS_DB_user: "postgres"
-        ACTIONS_DB_pw: "postgres"
-        ACTIONS_DB_name: "expenses"
+        ACTIONS_DB_host: ${{ secrets.DB_HOST }}
+        ACTIONS_DB_port: ${{ secrets.DB_PORT }}
+        ACTIONS_DB_user: ${{ secrets.DB_USER }}
+        ACTIONS_DB_pw: ${{ secrets.DB_PASSWORD }}
+        ACTIONS_DB_name: ${{ secrets.DB_NAME }}
 
 
     - name: Test
