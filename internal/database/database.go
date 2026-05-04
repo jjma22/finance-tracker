@@ -11,15 +11,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	env_config "github.com/jjma22/finance-tracker/internal/config"
 	"github.com/jjma22/finance-tracker/internal/data"
-)
-
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "postgres"
-	dbname   = "expenses"
 )
 
 type db struct {
@@ -29,10 +22,10 @@ type db struct {
 
 var DB = db{}
 
-func newDb(l *slog.Logger) error {
+func newDb(l *slog.Logger, db *env_config.Database) error {
 
 	// should make ssl mode a flag
-	url := "postgresql://" + user + ":" + password + "@" + host + ":" + strconv.Itoa(port) + "/" + dbname + "?sslmode=disable"
+	url := "postgresql://" + db.DB_user + ":" + db.DB_password + "@" + db.DB_host + ":" + db.DB_port + "/" + db.DB_name + "?sslmode=disable"
 	config, err := pgxpool.ParseConfig(url)
 	if err != nil {
 		slog.Error("Could not connect to database -", "Error", err)
@@ -54,10 +47,10 @@ func newDb(l *slog.Logger) error {
 }
 
 // Func to try connection to db multiple times. Panics after tring 3 times
-func InitDb(l *slog.Logger) {
+func InitDb(l *slog.Logger, db *env_config.Database) {
 	i := 0
 	for i < 2 {
-		err := newDb(l)
+		err := newDb(l, db)
 
 		if err == nil {
 			DB.l.Info("Successfully established database connection")

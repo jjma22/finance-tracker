@@ -18,9 +18,9 @@ type Database struct {
 	DB_name     string
 }
 
-func LoadConfig() *Config {
+func LoadConfig(p string) *Config {
 
-	err := godotenv.Load("./.env")
+	err := godotenv.Load(p)
 	if err != nil {
 		slog.Error("Error loading .env file", "error", err)
 	}
