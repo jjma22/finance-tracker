@@ -38,11 +38,11 @@ jobs:
     - name: create .env file
       run: |
         touch .env
-        echo DB_Host=${{ secrets.DB_HOST }} > .env
-        echo DB_port=${{ secrets.DB_PORT }} > .env
-        echo DB_user=${{ secrets.DB_USER }} > .env
-        echo DB_password=${{ secrets.DB_PASSWORD }} > .env
-        echo DB_name=${{ secrets.DB_NAME }} > .env
+        echo DB_host=${{ secrets.DB_HOST }} > .env
+        echo DB_port=${{ secrets.DB_PORT }} >> .env
+        echo DB_user=${{ secrets.DB_USER }} >> .env
+        echo DB_password=${{ secrets.DB_PASSWORD }} >> .env
+        echo DB_name=${{ secrets.DB_NAME }} >> .env
       
     - name: Set up Go
       uses: actions/setup-go@v4
