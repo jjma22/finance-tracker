@@ -21,7 +21,7 @@ jobs:
         image: postgres
         # Provide the password for postgres
         env:
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -38,11 +38,11 @@ jobs:
     - name: create .env file
       run: |
         touch .env
-        echo DB_Host=${{ secrets.DB_host }} > .env
-        echo DB_port=${{ secrets.DB_port }} > .env
-        echo DB_user=${{ secrets.DB_user }} > .env
-        echo DB_password${{ secrets.DB_password }} > .env
-        echo DB_name=${{ secrets.DB_name }} > .env
+        echo DB_Host=${{ secrets.DB_HOST }} > .env
+        echo DB_port=${{ secrets.DB_PORT }} > .env
+        echo DB_user=${{ secrets.DB_USER }} > .env
+        echo DB_password=${{ secrets.DB_PASSWORD }} > .env
+        echo DB_name=${{ secrets.DB_NAME }} > .env
       
     - name: Set up Go
       uses: actions/setup-go@v4
