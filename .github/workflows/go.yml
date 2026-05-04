@@ -35,6 +35,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: create .env file
+      run: |
+        touch .env
+        echo DB_Host=${{ secrets.DB_host }} > .env
+        echo DB_port=${{ secrets.DB_port }} > .env
+        echo DB_user=${{ secrets.DB_user }} > .env
+        echo DB_password${{ secrets.DB_password }} > .env
+        echo DB_name=${{ secrets.DB_name }} > .env
+      
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
