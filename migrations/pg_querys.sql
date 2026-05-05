@@ -37,3 +37,12 @@ CREATE TABLE budget  (
     lastupdate timestamptz
 )
 
+-- Add authentication
+CREATE TABLE users(
+  pk SERIAL PRIMARY KEY,
+  id UUID NOT NULL,
+  username VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  UNIQUE(id)
+);
+

@@ -31,6 +31,8 @@ func main() {
 	// Initialise new ServerMux
 	sm := http.NewServeMux()
 
+	sm.HandleFunc("POST /login", fh.LoginUser)
+
 	sm.Handle("POST /monthlybudget", fh.MiddleWareValidateBudget(http.HandlerFunc(fh.SetBudget)))
 	sm.HandleFunc("GET /monthlybudget/{id}", fh.GetBudget)
 	sm.HandleFunc("PUT /monthlybudget/{id}", fh.UpdateBudget)
