@@ -1,6 +1,11 @@
 {
-    "name": "Go Latest (Mojave Workaround)",
-    "image": "mcr.microsoft.com/devcontainers/go:1-bookworm",
+    "name": "Go Exact Version",
+    "image": "mcr.microsoft.com/devcontainers/base:bookworm", 
+    "features": {
+        "ghcr.io/devcontainers/features/go:1": {
+            "version": "1.26.2"
+        }
+    },
     "customizations": {
         "vscode": {
             "extensions": [
@@ -8,6 +13,5 @@
             ]
         }
     },
-    "remoteUser": "vscode",
-    "postCreateCommand": "go version"
+    "remoteUser": "vscode"
 }
