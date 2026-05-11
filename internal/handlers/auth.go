@@ -71,6 +71,7 @@ func (f *financeServer) CreateUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Generate hashed password
 	hashedPw, err := HashPassword(user.Password)
 	if err != nil {
 		f.l.Error("Error hasing user password", "error", err)
@@ -78,15 +79,26 @@ func (f *financeServer) CreateUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check orignal and hashed password match
 	if VerifyPassword(user.Password, hashedPw) != true {
 		f.l.Error("Hashed password does not match original request, not storing", "error", err)
 		http.Error(rw, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
+	// Create new user in users table
+	err = database.CreateUser(user.Username, hashedPw)
+	if err != nil {
+		f.l.Error("Error inserting new user into database", "error", err)
+		http.Error(rw, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
 }
+
 func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	fmt.Printf(string(bytes))
 	return string(bytes), err
 }
 

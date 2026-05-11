@@ -40,9 +40,12 @@ CREATE TABLE budget  (
 -- Add authentication
 CREATE TABLE users(
   pk SERIAL PRIMARY KEY,
-  id UUID NOT NULL,
+  id UUID,
   username VARCHAR(255) NOT NULL,
   password VARCHAR(255) NOT NULL,
   UNIQUE(id)
 );
 
+
+-- Drop NOT NULL on id
+ALTER TABLE users ALTER COLUMN id DROP NOT NULL
