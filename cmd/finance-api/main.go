@@ -17,7 +17,6 @@ import (
 func main() {
 
 	Config := *env_config.LoadConfig("./.env")
-	auth.InitjwtKey(Config.Auth.JwtKey)
 
 	db_connection := Config.Database
 
@@ -26,6 +25,9 @@ func main() {
 
 	// Setup database connection
 	database.InitDb(l, &db_connection)
+
+	// Set up JWT
+	auth.InitjwtKey(&Config.Auth)
 
 	// Declare handler
 	fh := handlers.FinanceNewServer(l)

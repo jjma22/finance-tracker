@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	env_config "github.com/jjma22/finance-tracker/internal/config"
 )
 
 type User struct {
@@ -20,8 +21,8 @@ type CustomClaims struct {
 
 var JwtKey string
 
-func InitjwtKey(jwt string) {
-	JwtKey = jwt
+func InitjwtKey(auth *env_config.Auth) {
+	JwtKey = auth.JwtKey
 }
 
 func createToken(u string) (string, error) {
