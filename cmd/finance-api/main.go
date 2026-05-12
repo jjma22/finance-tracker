@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/jjma22/finance-tracker/internal/auth"
 	env_config "github.com/jjma22/finance-tracker/internal/config"
 	"github.com/jjma22/finance-tracker/internal/database"
 	"github.com/jjma22/finance-tracker/internal/handlers"
@@ -16,6 +17,7 @@ import (
 func main() {
 
 	Config := *env_config.LoadConfig("./.env")
+	auth.InitjwtKey(Config.Auth.JwtKey)
 
 	db_connection := Config.Database
 
@@ -31,7 +33,7 @@ func main() {
 	// Initialise new ServerMux
 	sm := http.NewServeMux()
 
-	sm.HandleFunc("POST /login", fh.LoginUser)
+	sm.HandleFunc("POST /login", fh.VerifyUser)
 	sm.HandleFunc("POST /create/user", fh.CreateUser)
 
 	sm.Handle("POST /monthlybudget", fh.MiddleWareValidateBudget(http.HandlerFunc(fh.SetBudget)))
@@ -53,8 +55,8 @@ func main() {
 		Addr:         serverPort,
 		Handler:      sm,
 		IdleTimeout:  120 * time.Second,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
 	}
 
 	go func() {

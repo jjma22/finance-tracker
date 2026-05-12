@@ -23,7 +23,7 @@ func (f *financeServer) UserFromJSON(r *http.Request) (*auth.User, error) {
 	return &u, nil
 
 }
-func (f *financeServer) LoginUser(rw http.ResponseWriter, r *http.Request) {
+func (f *financeServer) VerifyUser(rw http.ResponseWriter, r *http.Request) {
 	// Get user details from request
 	user, err := f.UserFromJSON(r)
 
@@ -48,7 +48,7 @@ func (f *financeServer) LoginUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user.Password, err = HashPassword(user.Password)
+	//user.Password, err = HashPassword(user.Password)
 
 	userDetails, err := database.GetUser(user.Username)
 	if err != nil {
@@ -57,8 +57,13 @@ func (f *financeServer) LoginUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(userDetails)
+	if VerifyPassword(user.Password, userDetails.Password) != true {
+		f.l.Error("Incorrect password", "error", err)
+		http.Error(rw, "Username or password incorrect", http.StatusNotFound)
+		return
+	}
 
+	f.l.Info("User login successful")
 }
 
 func (f *financeServer) CreateUser(rw http.ResponseWriter, r *http.Request) {

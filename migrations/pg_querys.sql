@@ -48,4 +48,7 @@ CREATE TABLE users(
 
 
 -- Drop NOT NULL on id
-ALTER TABLE users ALTER COLUMN id DROP NOT NULL
+ALTER TABLE users ALTER COLUMN id NOT NULL
+
+ALTER TABLE userse ALTER COLUMN id UUID gen_random_uuid()
+gen_random_uuid()
