@@ -38,8 +38,8 @@ func main() {
 	sm.HandleFunc("POST /login", fh.VerifyUser)
 	sm.HandleFunc("POST /create/user", fh.CreateUser)
 
-	sm.Handle("POST /monthlybudget", fh.MiddleWareValidateBudget(http.HandlerFunc(fh.SetBudget)))
-	sm.HandleFunc("GET /monthlybudget/{id}", fh.GetBudget)
+	sm.Handle("POST /monthlybudget", fh.MiddleWareValidateAuthentication(fh.MiddleWareValidateBudget(http.HandlerFunc(fh.SetBudget))))
+	sm.Handle("GET /monthlybudget/{id}", fh.MiddleWareValidateAuthentication(http.HandlerFunc(fh.GetBudget)))
 	sm.HandleFunc("PUT /monthlybudget/{id}", fh.UpdateBudget)
 
 	sm.HandleFunc("GET /expense/total", fh.GetTotalExpense)

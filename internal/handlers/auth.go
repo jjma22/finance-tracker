@@ -3,9 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jjma22/finance-tracker/internal/auth"
 	"github.com/jjma22/finance-tracker/internal/database"
 	"golang.org/x/crypto/bcrypt"
@@ -64,6 +65,27 @@ func (f *financeServer) VerifyUser(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	f.l.Info("User login successful")
+
+	// Generate token for authenticated user
+	userToken, err := auth.CreateToken(user.Username)
+	if err != nil {
+		f.l.Error("Error generating token for user", "error", err)
+		http.Error(rw, "Internal server error", http.StatusInternalServerError)
+	}
+
+	// Write token into JSON
+	resp, err := json.Marshal(&auth.UserToken{
+		Token: userToken,
+	})
+
+	if err != nil {
+		f.l.Error("Error marhsing usr token", "error", err)
+		http.Error(rw, "Internal server error", http.StatusInternalServerError)
+	}
+
+	// return token to user
+	rw.Write(resp)
+
 }
 
 func (f *financeServer) CreateUser(rw http.ResponseWriter, r *http.Request) {
@@ -101,9 +123,9 @@ func (f *financeServer) CreateUser(rw http.ResponseWriter, r *http.Request) {
 
 }
 
+// Creates hash of password
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
-	fmt.Printf(string(bytes))
 	return string(bytes), err
 }
 
@@ -111,4 +133,60 @@ func HashPassword(password string) (string, error) {
 func VerifyPassword(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func (f *financeServer) MiddleWareValidateAuthentication(next http.Handler) http.Handler {
+	// Annonymous function to validate expense before passing request onto next handler
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		// Get token from Authorization header
+		authHeader := r.Header.Get("Authorization")
+		authArr := strings.Split(authHeader, " ")
+
+		// Errors if auth header splits into more than 2
+		if len(authArr) != 2 {
+			f.l.Error("Bearer token split into array of 3 during validation", "error", errors.New("Invalid authentication method"))
+			http.Error(rw, "Invalid authentication method", http.StatusUnauthorized)
+			return
+		}
+		// Checks Authorization method bearer is being used
+		if authArr[0] != "Bearer" {
+			f.l.Error("User did not use authentication method Bearer", "error", errors.New("Invalid authentication method"))
+			http.Error(rw, "Unauthorized authentication method", http.StatusUnauthorized)
+			return
+		}
+
+		token, err := jwt.Parse(authArr[1], func(token *jwt.Token) (any, error) {
+			return []byte(auth.GetJwtKey()), nil
+		})
+
+		if err != nil {
+			f.l.Error("Error parsing token", "error", err)
+			http.Error(rw, "Error authorizing credentials", http.StatusInternalServerError)
+			return
+		}
+
+		switch {
+		case token.Valid:
+			next.ServeHTTP(rw, r)
+		case errors.Is(err, jwt.ErrTokenMalformed):
+			f.l.Error("User using malformed token", "error", errors.New("Invalid token"))
+			http.Error(rw, "Error authorizing credentials", http.StatusUnauthorized)
+			return
+		case errors.Is(err, jwt.ErrTokenSignatureInvalid):
+			// Invalid signature
+			f.l.Error("User using token with invalid signature", "error", errors.New("Invalid token"))
+			http.Error(rw, "Error authorizing credentials", http.StatusUnauthorized)
+			return
+		case errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet):
+			// Token is either expired or not active yet
+			f.l.Error("User token expired", "error", errors.New("Invalid token"))
+			http.Error(rw, "Error authorizing credentials", http.StatusUnauthorized)
+			return
+		default:
+			f.l.Error("Error handling user token", "error", errors.New("Invalid token"))
+			http.Error(rw, "Error authorizing credentials", http.StatusUnauthorized)
+			return
+		}
+	})
+
 }

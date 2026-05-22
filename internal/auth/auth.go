@@ -19,23 +19,35 @@ type CustomClaims struct {
 	jwt.RegisteredClaims
 }
 
+type UserToken struct {
+	Token string
+}
+
 var JwtKey string
 
 func InitjwtKey(auth *env_config.Auth) {
 	JwtKey = auth.JwtKey
 }
 
-func createToken(u string) (string, error) {
+func GetJwtKey() string {
+	return JwtKey
+}
+func CreateToken(u string) (string, error) {
 	var jwtKey = []byte(JwtKey)
 
 	claims := CustomClaims{
+		// subject username
 		u,
 		jwt.RegisteredClaims{
+			// expiry time
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
 	}
 
+	// Creates a new token with the specified signing method and claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	//Creates and returns a complete, signed JWT
 	ss, err := token.SignedString(jwtKey)
 	if err != nil {
 		return "", errors.New("Error signing token")
