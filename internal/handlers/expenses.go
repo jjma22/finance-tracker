@@ -35,7 +35,7 @@ func (f *financeServer) ExpenseFromJSON(r *http.Request) (error, *data.Expense) 
 		f.l.Error(err.Error())
 		return err, nil
 	}
-	fmt.Println(e)
+
 	return nil, &e
 }
 

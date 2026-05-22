@@ -37,3 +37,18 @@ CREATE TABLE budget  (
     lastupdate timestamptz
 )
 
+-- Add authentication
+CREATE TABLE users(
+  pk SERIAL PRIMARY KEY,
+  id UUID,
+  username VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  UNIQUE(id)
+);
+
+
+-- Drop NOT NULL on id
+ALTER TABLE users ALTER COLUMN id NOT NULL
+
+ALTER TABLE userse ALTER COLUMN id UUID gen_random_uuid()
+gen_random_uuid()

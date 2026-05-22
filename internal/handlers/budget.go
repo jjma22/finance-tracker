@@ -127,7 +127,6 @@ func (f *financeServer) MiddleWareValidateBudget(next http.Handler) http.Handler
 
 		ctx := context.WithValue(r.Context(), Budget{}, b)
 		r = r.WithContext(ctx)
-		fmt.Println(r)
 		// calls next handler passed in as next, currently AddExpense
 		next.ServeHTTP(rw, r)
 	})

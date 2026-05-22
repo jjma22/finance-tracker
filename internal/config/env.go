@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	Database Database
+	Auth     Auth
 }
 type Database struct {
 	DB_host     string
@@ -16,6 +17,10 @@ type Database struct {
 	DB_user     string
 	DB_password string
 	DB_name     string
+}
+
+type Auth struct {
+	JwtKey string
 }
 
 func LoadConfig(p string) *Config {
@@ -31,6 +36,9 @@ func LoadConfig(p string) *Config {
 			DB_user:     os.Getenv("DB_user"),
 			DB_password: os.Getenv("DB_password"),
 			DB_name:     os.Getenv("DB_name"),
+		},
+		Auth: Auth{
+			JwtKey: os.Getenv("jwt_key"),
 		},
 	}
 }

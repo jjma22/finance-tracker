@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/jjma22/finance-tracker/internal/auth"
 	env_config "github.com/jjma22/finance-tracker/internal/config"
 	"github.com/jjma22/finance-tracker/internal/database"
 	"github.com/jjma22/finance-tracker/internal/handlers"
@@ -25,14 +26,20 @@ func main() {
 	// Setup database connection
 	database.InitDb(l, &db_connection)
 
+	// Set up JWT
+	auth.InitjwtKey(&Config.Auth)
+
 	// Declare handler
 	fh := handlers.FinanceNewServer(l)
 
 	// Initialise new ServerMux
 	sm := http.NewServeMux()
 
-	sm.Handle("POST /monthlybudget", fh.MiddleWareValidateBudget(http.HandlerFunc(fh.SetBudget)))
-	sm.HandleFunc("GET /monthlybudget/{id}", fh.GetBudget)
+	sm.HandleFunc("POST /login", fh.VerifyUser)
+	sm.HandleFunc("POST /create/user", fh.CreateUser)
+
+	sm.Handle("POST /monthlybudget", fh.MiddleWareValidateAuthentication(fh.MiddleWareValidateBudget(http.HandlerFunc(fh.SetBudget))))
+	sm.Handle("GET /monthlybudget/{id}", fh.MiddleWareValidateAuthentication(http.HandlerFunc(fh.GetBudget)))
 	sm.HandleFunc("PUT /monthlybudget/{id}", fh.UpdateBudget)
 
 	sm.HandleFunc("GET /expense/total", fh.GetTotalExpense)
