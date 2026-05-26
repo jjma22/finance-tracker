@@ -60,7 +60,7 @@ func (f *financeServer) VerifyUser(rw http.ResponseWriter, r *http.Request) {
 
 	if VerifyPassword(user.Password, userDetails.Password) != true {
 		f.l.Error("Incorrect password", "error", err)
-		http.Error(rw, "Username or password incorrect", http.StatusNotFound)
+		http.Error(rw, "Username or password incorrect", http.StatusUnauthorized)
 		return
 	}
 
