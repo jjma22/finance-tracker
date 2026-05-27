@@ -49,3 +49,25 @@ func CreateUser(username string, pw string) error {
 	}
 	return nil
 }
+
+func VerifyUserExists(username string) (bool, error) {
+	DB.l.Info("Getting user from database")
+
+	row, err := DB.pool.Query(context.Background(), "select username from users where username = $1", username)
+	if err != nil {
+		DB.l.Error("Failed querying database", "error", err)
+		return false, err
+	}
+
+	users, err := pgx.CollectRows(row, pgx.RowTo[string])
+	if err != nil {
+		DB.l.Error("Failed querying row", "error", err)
+		return false, err
+	}
+
+	if len(users) == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}

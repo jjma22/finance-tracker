@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/jjma22/finance-tracker/internal/auth"
@@ -62,39 +63,73 @@ func TestCreateUser(t *testing.T) {
 	})
 }
 
+// Tests creating a user with username that already exists
+func TestCreateUsernameAlreadyExists(t *testing.T) {
+	t.Run("creates user", func(t *testing.T) {
+
+		en, err := json.Marshal(TestUser)
+
+		if err != nil {
+			t.Fatalf("Unable to parse user %v , '%v'", TestUser, err)
+		}
+		request, _ := http.NewRequest(http.MethodPost, "/create/user", bytes.NewReader(en))
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initDBTestAuth()
+
+		fh := handlers.FinanceNewServer(l)
+
+		fh.CreateUser(response, request)
+
+		want := 400
+		got := response.Code
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+
+		expectedError := "User already exists"
+		returnedError := strings.TrimSpace(response.Body.String())
+
+		if returnedError != expectedError {
+			t.Errorf("got '%s', want '%s'", returnedError, expectedError)
+		}
+	})
+}
+
 // Tests creating a user fails is username is not specified
-// Currently fails, need to add functionality to check for empty password and return error
-// func TestCreateUserNoPasswordSupplied(t *testing.T) {
-// 	t.Run("creates user", func(t *testing.T) {
+func TestCreateUserNoPasswordSupplied(t *testing.T) {
+	t.Run("creates user", func(t *testing.T) {
 
-// 		u := &auth.User{
-// 			Username: "test_user",
-// 		}
+		u := &auth.User{
+			Username: "test_user",
+		}
 
-// 		en, err := json.Marshal(u)
+		en, err := json.Marshal(u)
 
-// 		if err != nil {
-// 			t.Fatalf("Unable to parse user %v , '%v'", u, err)
-// 		}
-// 		request, _ := http.NewRequest(http.MethodPost, "/create/user", bytes.NewReader(en))
-// 		response := httptest.NewRecorder()
+		if err != nil {
+			t.Fatalf("Unable to parse user %v , '%v'", u, err)
+		}
+		request, _ := http.NewRequest(http.MethodPost, "/create/user", bytes.NewReader(en))
+		response := httptest.NewRecorder()
 
-// 		l := slog.Default()
-// 		initDBTestAuth()
+		l := slog.Default()
+		initDBTestAuth()
 
-// 		fh := handlers.FinanceNewServer(l)
+		fh := handlers.FinanceNewServer(l)
 
-// 		fh.CreateUser(response, request)
+		fh.CreateUser(response, request)
 
-// 		want := 200
-// 		got := response.Code
+		want := 400
+		got := response.Code
 
-// 		if got != want {
-// 			t.Errorf("got %d, want %d", got, want)
-// 		}
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
 
-// 	})
-// }
+	})
+}
 
 // Hashed password returns different value to original password, but can be verified with the same password
 func TestHashedPassword(t *testing.T) {
@@ -148,8 +183,6 @@ func TestVerifyUser(t *testing.T) {
 		if err != nil {
 			t.Errorf("Unable to parse response from server %v into user token, '%v'", response.Body, err)
 		}
-
-		fmt.Println(token)
 
 	})
 }
