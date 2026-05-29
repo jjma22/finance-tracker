@@ -57,7 +57,9 @@ func TestPOSTBudget(t *testing.T) {
 		fh := handlers.FinanceNewServer(l)
 
 		// Set context due to middleware
+		uuid := "1234-abc-defgg-54321"
 		ctx := context.WithValue(request.Context(), handlers.Budget{}, b)
+		ctx = context.WithValue(ctx, handlers.UserKey{}, uuid)
 		request = request.WithContext(ctx)
 
 		fh.SetBudget(response, request)
@@ -82,6 +84,10 @@ func TestGETBudget(t *testing.T) {
 		// Manualy inject path
 		request.SetPathValue("id", "1")
 		fh := handlers.FinanceNewServer(l)
+		uuid := "1234-abc-defgg-54321"
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, uuid)
+
+		request.WithContext(ctx)
 		fh.GetBudget(response, request)
 
 		var got data.Budget
@@ -116,6 +122,11 @@ func TestPUTBudget(t *testing.T) {
 		// Manualy inject path
 		request.SetPathValue("id", "1")
 		fh := handlers.FinanceNewServer(l)
+
+		uuid := "1234-abc-defgg-54321"
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, uuid)
+
+		request.WithContext(ctx)
 		fh.UpdateBudget(response, request)
 
 		want := 200
