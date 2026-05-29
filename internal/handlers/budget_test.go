@@ -87,7 +87,8 @@ func TestGETBudget(t *testing.T) {
 		uuid := "1234-abc-defgg-54321"
 		ctx := context.WithValue(request.Context(), handlers.UserKey{}, uuid)
 
-		request.WithContext(ctx)
+		request = request.WithContext(ctx)
+
 		fh.GetBudget(response, request)
 
 		var got data.Budget
@@ -126,7 +127,7 @@ func TestPUTBudget(t *testing.T) {
 		uuid := "1234-abc-defgg-54321"
 		ctx := context.WithValue(request.Context(), handlers.UserKey{}, uuid)
 
-		request.WithContext(ctx)
+		request = request.WithContext(ctx)
 		fh.UpdateBudget(response, request)
 
 		want := 200
