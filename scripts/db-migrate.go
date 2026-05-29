@@ -77,8 +77,7 @@ func main() {
 
 	users_id_gen_id_query := `
 	ALTER TABLE users
-	ALTER COLUMN id UUID gen_random_uuid()
-	gen_random_uuid()
+	ALTER COLUMN id SET DEFAULT gen_random_uuid()
 	`
 	_, err = DB.pool.Exec(context.Background(), users_id_gen_id_query)
 	if err != nil {

@@ -50,5 +50,5 @@ CREATE TABLE users(
 -- Drop NOT NULL on id
 ALTER TABLE users ALTER COLUMN id NOT NULL
 
-ALTER TABLE users ALTER COLUMN id UUID gen_random_uuid()
-gen_random_uuid()
+ALTER TABLE users
+ALTER COLUMN id SET DEFAULT gen_random_uuid()
