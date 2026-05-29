@@ -42,12 +42,12 @@ func main() {
 	sm.Handle("GET /monthlybudget/{id}", fh.MiddleWareValidateAuthentication(http.HandlerFunc(fh.GetBudget)))
 	sm.Handle("PUT /monthlybudget/{id}", fh.MiddleWareValidateAuthentication(http.HandlerFunc(fh.UpdateBudget)))
 
-	sm.HandleFunc("GET /expense/total", fh.GetTotalExpense)
-	sm.HandleFunc("GET /expense/{id}", fh.GetExpense)
-	sm.HandleFunc("GET /expense", fh.GetExpenses)
-	sm.Handle("POST /expense", fh.MiddleWareValidateExpense(http.HandlerFunc(fh.AddExpense)))
-	sm.HandleFunc("PUT /expense/update/{id}", fh.UpdateExpense)
-	sm.HandleFunc("DELETE /expense/delete/{id}", fh.DeleteExpense)
+	sm.Handle("GET /expense/total", fh.MiddleWareValidateAuthentication(http.HandlerFunc(fh.GetTotalExpense)))
+	sm.Handle("GET /expense/{id}", fh.MiddleWareValidateAuthentication(http.HandlerFunc(fh.GetExpense)))
+	sm.Handle("GET /expense", fh.MiddleWareValidateAuthentication(http.HandlerFunc((fh.GetExpenses))))
+	sm.Handle("POST /expense", fh.MiddleWareValidateAuthentication(fh.MiddleWareValidateExpense(http.HandlerFunc(fh.AddExpense))))
+	sm.Handle("PUT /expense/update/{id}", fh.MiddleWareValidateAuthentication(http.HandlerFunc(fh.UpdateExpense)))
+	sm.Handle("DELETE /expense/delete/{id}", fh.MiddleWareValidateAuthentication(http.HandlerFunc(fh.DeleteExpense)))
 
 	//Remove 127.0.0.1 when deploying to Docker, causes issues on local firewall without
 	serverPort := "127.0.0.1:9090"
