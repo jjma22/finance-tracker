@@ -155,6 +155,8 @@ func VerifyPassword(password, hash string) bool {
 	return err == nil
 }
 
+type UserKey struct{}
+
 func (f *financeServer) MiddleWareValidateAuthentication(next http.Handler) http.Handler {
 	// Annonymous function to validate expense before passing request onto next handler
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
@@ -185,10 +187,11 @@ func (f *financeServer) MiddleWareValidateAuthentication(next http.Handler) http
 			return
 		}
 
+		// Get userid from jtw token
 		userid := token.Claims.(jwt.MapClaims)
 
-		type userKey struct{}
-		ctx := context.WithValue(r.Context(), userKey{}, userid)
+		//Set userid in context for handlers
+		ctx := context.WithValue(r.Context(), UserKey{}, userid["username"])
 
 		switch {
 		case token.Valid:

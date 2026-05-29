@@ -10,14 +10,14 @@ import (
 )
 
 // Set new budget
-func SetBudget(b int) error {
+func SetBudget(b int, uuid string) error {
 	// Set current data and time
 	dateAdded := time.Now().Truncate(time.Second)
 	lastUpdate := time.Now().Truncate(time.Second)
 
 	// Insert into database
-	_, err := DB.pool.Exec(context.Background(), "INSERT INTO budget (budget,dateadded,lastupdate) Values ($1, $2, $3)",
-		b, dateAdded, lastUpdate)
+	_, err := DB.pool.Exec(context.Background(), "INSERT INTO budget (budget,dateadded,lastupdate) Values ($1, $2, $3) WHERE uuid = $4",
+		b, dateAdded, lastUpdate, uuid)
 	if err != nil {
 		return err
 	}
@@ -27,10 +27,10 @@ func SetBudget(b int) error {
 }
 
 // Get budget from id in path
-func GetBudget(id int) (*data.Budget, error) {
+func GetBudget(id int, uuid string) (*data.Budget, error) {
 
 	// Run query on database to return budget
-	row, err := DB.pool.Query(context.Background(), "select budget from budget where id = $1", id)
+	row, err := DB.pool.Query(context.Background(), "select budget from budget where id = $1 AND uuid = $2", id, uuid)
 	if err != nil {
 		DB.l.Error("Failed querying database", "error", err)
 		return nil, err
@@ -58,10 +58,10 @@ func GetBudget(id int) (*data.Budget, error) {
 }
 
 // Update budget with id from URL path
-func UpdateBudget(id int, b int) error {
+func UpdateBudget(id int, b int, uuid string) error {
 	// Need to add check to see if id exists
 	// Run query on database to update budget
-	r, err := DB.pool.Exec(context.Background(), "UPDATE budget SET budget = $1 WHERE id = $2", b, id)
+	r, err := DB.pool.Exec(context.Background(), "UPDATE budget SET budget = $1 WHERE id = $2 and uuid = $3", b, id, uuid)
 	if err != nil {
 		DB.l.Error("Failed querying database", "error", err)
 		return err
