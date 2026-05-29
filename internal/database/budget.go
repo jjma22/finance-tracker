@@ -16,8 +16,8 @@ func SetBudget(b int, uuid string) error {
 	lastUpdate := time.Now().Truncate(time.Second)
 
 	// Insert into database
-	_, err := DB.pool.Exec(context.Background(), "INSERT INTO budget (budget,dateadded,lastupdate) Values ($1, $2, $3) WHERE uuid = $4",
-		b, dateAdded, lastUpdate, uuid)
+	_, err := DB.pool.Exec(context.Background(), "INSERT INTO budget (budget,uuid,dateadded,lastupdate) Values ($1, $2, $3, $4",
+		b, uuid, dateAdded, lastUpdate)
 	if err != nil {
 		return err
 	}
