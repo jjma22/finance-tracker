@@ -76,16 +76,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE users  (pk SERIAL PRIMARY KEY, id UUID, username VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL, UNIQUE(id);")
+	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE users  (pk SERIAL PRIMARY KEY, id UUID, username VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL, UNIQUE(id)")
 	if err != nil {
-		slog.Error("Error creating expenses users", "error", err)
+		slog.Error("Error creating users", "error", err)
 		os.Exit(1)
 	}
 
 	users_id_gen_id_query := `
 	"ALTER TABLE users
 	ALTER COLUMN id UUID gen_random_uuid()
-	gen_random_uuid();
+	gen_random_uuid()
 	`
 	_, err = DB.pool.Exec(context.Background(), users_id_gen_id_query)
 	if err != nil {
