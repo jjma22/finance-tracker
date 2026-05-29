@@ -60,7 +60,7 @@ func (f *financeServer) VerifyUser(rw http.ResponseWriter, r *http.Request) {
 
 	if VerifyPassword(user.Password, userDetails.Password) != true {
 		f.l.Error("Incorrect password", "error", err)
-		http.Error(rw, "Username or password incorrect", http.StatusNotFound)
+		http.Error(rw, "Username or password incorrect", http.StatusUnauthorized)
 		return
 	}
 
@@ -98,6 +98,25 @@ func (f *financeServer) CreateUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if user.Username == "" || user.Password == "" {
+		f.l.Error("Invalid credentials sent to create user", "error", err)
+		http.Error(rw, "Invalid username or password", http.StatusBadRequest)
+		return
+	}
+	// Verify if user already exists
+
+	exists, err := database.VerifyUserExists(user.Username)
+	if err != nil {
+		f.l.Error("Error checking if user exists", "error", err)
+		http.Error(rw, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if exists {
+		f.l.Error("User already exists", "error", err)
+		http.Error(rw, "User already exists", http.StatusBadRequest)
+		return
+	}
 	// Generate hashed password
 	hashedPw, err := HashPassword(user.Password)
 	if err != nil {
