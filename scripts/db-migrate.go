@@ -63,7 +63,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE budget  (id SERIAL PRIMARY KEY, budget NUMERIC, dateadded timestamptz, lastupdate timestamptz)")
+	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE budget  (id SERIAL PRIMARY KEY, budget NUMERIC, uuid VARCHAR(255) NOT NULL, dateadded timestamptz, lastupdate timestamptz)")
 	if err != nil {
 		slog.Error("Error creating budget table", "error", err)
 		os.Exit(1)

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -66,8 +67,8 @@ func (f *financeServer) VerifyUser(rw http.ResponseWriter, r *http.Request) {
 
 	f.l.Info("User login successful")
 
-	// Generate token for authenticated user
-	userToken, err := auth.CreateToken(user.Username)
+	// Generate token for authenticated user+
+	userToken, err := auth.CreateToken(userDetails.Id)
 	if err != nil {
 		f.l.Error("Error generating token for user", "error", err)
 		http.Error(rw, "Internal server error", http.StatusInternalServerError)
@@ -154,6 +155,8 @@ func VerifyPassword(password, hash string) bool {
 	return err == nil
 }
 
+type UserKey struct{}
+
 func (f *financeServer) MiddleWareValidateAuthentication(next http.Handler) http.Handler {
 	// Annonymous function to validate expense before passing request onto next handler
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
@@ -184,9 +187,15 @@ func (f *financeServer) MiddleWareValidateAuthentication(next http.Handler) http
 			return
 		}
 
+		// Get userid from jtw token
+		userid := token.Claims.(jwt.MapClaims)
+
+		//Set userid in context for handlers
+		ctx := context.WithValue(r.Context(), UserKey{}, userid["username"])
+
 		switch {
 		case token.Valid:
-			next.ServeHTTP(rw, r)
+			next.ServeHTTP(rw, r.WithContext(ctx))
 		case errors.Is(err, jwt.ErrTokenMalformed):
 			f.l.Error("User using malformed token", "error", errors.New("Invalid token"))
 			http.Error(rw, "Error authorizing credentials", http.StatusUnauthorized)

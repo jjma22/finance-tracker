@@ -24,7 +24,10 @@ func (f *financeServer) BudgetFromJSON(r *http.Request) (*data.Budget, error) {
 
 func (f *financeServer) SetBudget(rw http.ResponseWriter, r *http.Request) {
 	b := r.Context().Value(Budget{}).(*data.Budget)
-	err := database.SetBudget(b.Budget)
+	uuid := r.Context().Value(UserKey{}).(string)
+
+	fmt.Println(uuid)
+	err := database.SetBudget(b.Budget, uuid)
 
 	if err != nil {
 		f.l.Error("Error setting new budget in databse", "err", err)
@@ -44,7 +47,8 @@ func (f *financeServer) GetBudget(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := database.GetBudget(id)
+	uuid := r.Context().Value(UserKey{}).(string)
+	b, err := database.GetBudget(id, uuid)
 
 	if err != nil {
 		f.l.Error("Error returning budget", "error", err)
@@ -82,8 +86,9 @@ func (f *financeServer) UpdateBudget(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uuid := r.Context().Value(UserKey{}).(string)
 	// Update monthly budget
-	err = database.UpdateBudget(id, b.Budget)
+	err = database.UpdateBudget(id, b.Budget, uuid)
 
 	if err != nil {
 		f.l.Error(err.Error())

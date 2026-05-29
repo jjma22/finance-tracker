@@ -15,7 +15,7 @@ type User struct {
 }
 
 type CustomClaims struct {
-	Username string `json:"username"`
+	UserId string `json:"username"`
 	jwt.RegisteredClaims
 }
 
@@ -32,12 +32,12 @@ func InitjwtKey(auth *env_config.Auth) {
 func GetJwtKey() string {
 	return JwtKey
 }
-func CreateToken(u string) (string, error) {
+func CreateToken(id string) (string, error) {
 	var jwtKey = []byte(JwtKey)
 
 	claims := CustomClaims{
 		// subject username
-		u,
+		id,
 		jwt.RegisteredClaims{
 			// expiry time
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
