@@ -26,7 +26,7 @@ func (f *financeServer) SetBudget(rw http.ResponseWriter, r *http.Request) {
 	b := r.Context().Value(Budget{}).(*data.Budget)
 	uuid := r.Context().Value(UserKey{}).(string)
 
-	//fmt.Println(uid)
+	fmt.Println(uuid)
 	err := database.SetBudget(b.Budget, uuid)
 
 	if err != nil {

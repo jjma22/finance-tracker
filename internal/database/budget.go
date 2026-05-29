@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -14,9 +15,8 @@ func SetBudget(b int, uuid string) error {
 	// Set current data and time
 	dateAdded := time.Now().Truncate(time.Second)
 	lastUpdate := time.Now().Truncate(time.Second)
-
 	// Insert into database
-	_, err := DB.pool.Exec(context.Background(), "INSERT INTO budget (budget,uuid,dateadded,lastupdate) Values ($1, $2, $3, $4",
+	_, err := DB.pool.Exec(context.Background(), "INSERT INTO budget (budget,uuid,dateadded,lastupdate) Values ($1, $2, $3, $4)",
 		b, uuid, dateAdded, lastUpdate)
 	if err != nil {
 		return err
@@ -30,6 +30,7 @@ func SetBudget(b int, uuid string) error {
 func GetBudget(id int, uuid string) (*data.Budget, error) {
 
 	// Run query on database to return budget
+	fmt.Println(id, uuid)
 	row, err := DB.pool.Query(context.Background(), "select budget from budget where id = $1 AND uuid = $2", id, uuid)
 	if err != nil {
 		DB.l.Error("Failed querying database", "error", err)
