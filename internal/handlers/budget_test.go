@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jjma22/finance-tracker/internal/auth"
 	env_config "github.com/jjma22/finance-tracker/internal/config"
 	"github.com/jjma22/finance-tracker/internal/data"
 	"github.com/jjma22/finance-tracker/internal/database"
@@ -227,4 +228,100 @@ func TestMiddleWarePassesOnBudget(t *testing.T) {
 	rsp := fh.MiddleWareValidateBudget(http.HandlerFunc(f1))
 
 	rsp.ServeHTTP(response, req)
+}
+
+// Auth tests
+
+func TestGetBudgetFailsWithoutAuth(t *testing.T) {
+	mux := http.NewServeMux()
+
+	protectedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// Declare handler
+	l := slog.Default()
+	fh := handlers.FinanceNewServer(l)
+
+	mux.Handle("GET /test-auth", fh.MiddleWareValidateAuthentication(protectedHandler))
+
+	request, _ := http.NewRequest(http.MethodGet, "/test-auth", nil)
+	response := httptest.NewRecorder()
+
+	mux.ServeHTTP(response, request)
+
+	want := 401
+	got := response.Code
+	if got != want {
+		t.Errorf("got %d, want %d", got, want)
+	}
+
+}
+
+func TestGetBudgetPassesWithAuth(t *testing.T) {
+
+	var token auth.UserToken
+
+	t.Run("Test user can get jwt", func(t *testing.T) {
+
+		en, err := json.Marshal(TestUser)
+
+		if err != nil {
+			t.Fatalf("Unable to parse user %v , '%v'", TestUser, err)
+		}
+		request, _ := http.NewRequest(http.MethodPost, "/login", bytes.NewReader(en))
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initDBTestAuth()
+
+		fh := handlers.FinanceNewServer(l)
+
+		fh.VerifyUser(response, request)
+
+		want := 200
+		got := response.Code
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+
+		}
+
+		err = json.Unmarshal(response.Body.Bytes(), &token)
+
+		if err != nil {
+			t.Errorf("Unable to parse response from server %v into user token, '%v'", response.Body, err)
+		}
+
+		if len(token.Token) <= 0 {
+			t.Errorf("Invalid token recieved when authenticating user")
+		}
+
+	})
+
+	t.Run("Test user is successfully authenticated", func(t *testing.T) {
+		mux := http.NewServeMux()
+
+		protectedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		// Declare handler
+		l := slog.Default()
+		fh := handlers.FinanceNewServer(l)
+
+		mux.Handle("GET /test-auth", fh.MiddleWareValidateAuthentication(protectedHandler))
+
+		request, _ := http.NewRequest(http.MethodGet, "/test-auth", nil)
+		response := httptest.NewRecorder()
+		token_header := "Bearer " + token.Token
+		request.Header.Add("Authorization", token_header)
+		mux.ServeHTTP(response, request)
+
+		want := 200
+		got := response.Code
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+	})
 }
