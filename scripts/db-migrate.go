@@ -76,7 +76,7 @@ func main() {
 	}
 
 	users_id_gen_id_query := `
-	"ALTER TABLE users
+	ALTER TABLE users
 	ALTER COLUMN id UUID gen_random_uuid()
 	gen_random_uuid()
 	`
