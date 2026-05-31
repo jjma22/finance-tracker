@@ -445,4 +445,85 @@ func TestCannotGetOtherUserBudget(t *testing.T) {
 			t.Errorf("got %d, want %d", response.Code, want)
 		}
 	})
+
+	t.Run("User can update budget", func(t *testing.T) {
+		b, err := json.Marshal(&data.Budget{
+			Budget: 1500,
+		})
+
+		if err != nil {
+			t.Fatalf("Unable to parse budget from client %d , '%v'", b, err)
+		}
+		request, _ := http.NewRequest(http.MethodPut, "/monthlybudget/1", bytes.NewReader(b))
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initDBTestAuth()
+		// Manualy inject path
+		request.SetPathValue("id", "1")
+		fh := handlers.FinanceNewServer(l)
+
+		uuid := User2Claims["username"]
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, uuid)
+
+		request = request.WithContext(ctx)
+		fh.UpdateBudget(response, request)
+
+		want := 200
+		got := response.Code
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+
+		// Check id 1 budget has updated
+		request, _ = http.NewRequest(http.MethodGet, "/monthlybudget/1", nil)
+		ctx = context.WithValue(request.Context(), handlers.UserKey{}, uuid)
+
+		request = request.WithContext(ctx)
+		// Manualy inject path
+		request.SetPathValue("id", "1")
+		fh.GetBudget(response, request)
+
+		var gotBudget data.Budget
+		err = json.NewDecoder(response.Body).Decode(&gotBudget)
+
+		if err != nil {
+			t.Fatalf("Unable to parse response from server %d into budget, '%v'", response.Body, err)
+		}
+		want = 1500
+
+		if gotBudget.Budget != want {
+			t.Errorf("got %d, want %d", gotBudget.Budget, want)
+		}
+	})
+	t.Run("User cannot update other users budget", func(t *testing.T) {
+		b, err := json.Marshal(&data.Budget{
+			Budget: 1500,
+		})
+
+		if err != nil {
+			t.Fatalf("Unable to parse budget from client %d , '%v'", b, err)
+		}
+		request, _ := http.NewRequest(http.MethodPut, "/monthlybudget/1", bytes.NewReader(b))
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initDBTestAuth()
+		// Manualy inject path
+		request.SetPathValue("id", "1")
+		fh := handlers.FinanceNewServer(l)
+
+		uuid := TestUserClaims["username"]
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, uuid)
+
+		request = request.WithContext(ctx)
+		fh.UpdateBudget(response, request)
+
+		want := 500
+		got := response.Code
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+	})
+
 }
