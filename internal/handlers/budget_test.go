@@ -53,7 +53,7 @@ func TestPOSTBudget(t *testing.T) {
 		initDBTest()
 
 		// Manualy inject path
-		request.SetPathValue("id", "1")
+		request.SetPathValue("id", "2")
 		fh := handlers.FinanceNewServer(l)
 
 		// Set context due to middleware
@@ -82,7 +82,7 @@ func TestGETBudget(t *testing.T) {
 		l := slog.Default()
 		initDBTest()
 		// Manualy inject path
-		request.SetPathValue("id", "1")
+		request.SetPathValue("id", "2")
 		fh := handlers.FinanceNewServer(l)
 		uuid := "1234-abc-defgg-54321"
 		ctx := context.WithValue(request.Context(), handlers.UserKey{}, uuid)
@@ -121,7 +121,7 @@ func TestPUTBudget(t *testing.T) {
 		l := slog.Default()
 		initDBTest()
 		// Manualy inject path
-		request.SetPathValue("id", "1")
+		request.SetPathValue("id", "2")
 		fh := handlers.FinanceNewServer(l)
 
 		uuid := "1234-abc-defgg-54321"
@@ -142,7 +142,7 @@ func TestPUTBudget(t *testing.T) {
 
 		request = request.WithContext(ctx)
 		// Manualy inject path
-		request.SetPathValue("id", "1")
+		request.SetPathValue("id", "2")
 		fh.GetBudget(response, request)
 
 		var gotBudget data.Budget
@@ -340,3 +340,5 @@ func TestGetBudgetPassesWithAuth(t *testing.T) {
 		}
 	})
 }
+
+// Auth: tests for multiple users
