@@ -55,6 +55,7 @@ type tempExpense struct {
 	SKU        string     `json:"sku" validate:"required,sku"`
 	DateAdded  *time.Time `json:"-"`
 	LastUpdate *time.Time `json:"-"`
+	Uuid       string     `json:"uuid"`
 }
 
 // Fucntion to return all expenses from database
@@ -131,7 +132,7 @@ func GetExpense(id int, uuid string) (*data.Expense, error) {
 
 func AddExpense(e *data.Expense, uuid string) error {
 	_, err := DB.pool.Exec(context.Background(), "INSERT INTO expenses (name, price, sku, dateadded,lastupdate, uuid) Values ($1, $2, $3, $4, $5, $6)",
-		e.Name, e.Price, e.SKU, e.DateAdded, e.LastUpdate)
+		e.Name, e.Price, e.SKU, e.DateAdded, e.LastUpdate, uuid)
 
 	if err != nil {
 		return err
