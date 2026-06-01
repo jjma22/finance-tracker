@@ -57,7 +57,7 @@ func main() {
 
 	newDb(host, port, user, pw, db)
 
-	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE expenses  (id SERIAL PRIMARY KEY, name VARCHAR(255),	price NUMERIC, sku VARCHAR(255), dateadded timestamptz, lastupdate timestamptz)")
+	_, err = DB.pool.Exec(context.Background(), "CREATE TABLE expenses  (id SERIAL PRIMARY KEY, name VARCHAR(255),	price NUMERIC, sku VARCHAR(255), dateadded timestamptz, lastupdate timestamptz, uuid VARCHAR(255) NOT NULL)")
 	if err != nil {
 		slog.Error("Error creating expenses table", "error", err)
 		os.Exit(1)
