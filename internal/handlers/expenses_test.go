@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -235,7 +236,7 @@ func TestPutExpense(t *testing.T) {
 			t.Errorf("Expected %d, got %d", expectedCode, response.Code)
 		}
 
-		request, _ = http.NewRequest(http.MethodGet, "/expense/1", nil)
+		request, _ = http.NewRequest(http.MethodGet, "/expense/update/1", nil)
 		request.SetPathValue("id", "1")
 		ctx = context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
 		request = request.WithContext(ctx)
@@ -270,3 +271,191 @@ func TestPutExpense(t *testing.T) {
 
 	})
 }
+
+func TestGetExpenses(t *testing.T) {
+	t.Run("Add second expense", func(t *testing.T) {
+		expense := data.Expense{
+			Name:  "expense 2",
+			Price: 1000,
+			SKU:   "abb-bca-abc",
+		}
+
+		e, err := json.Marshal(&expense)
+
+		if err != nil {
+			t.Fatalf("Unable to parse expense %v, '%v'", expense, err)
+		}
+
+		request, _ := http.NewRequest(http.MethodPost, "/expense", bytes.NewReader(e))
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initExpDBTest()
+
+		fh := handlers.FinanceNewServer(l)
+
+		ctx := context.WithValue(request.Context(), handlers.Keyexpense{}, &expense)
+		ctx = context.WithValue(ctx, handlers.UserKey{}, TestUuid)
+		request = request.WithContext(ctx)
+		fh.AddExpense(response, request)
+
+		want := 201
+		got := response.Code
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+
+	})
+	t.Run("Get total expenses", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/expense", nil)
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initExpDBTest()
+
+		fh := handlers.FinanceNewServer(l)
+
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
+		request = request.WithContext(ctx)
+		fh.GetExpenses(response, request)
+
+		want := 200
+		got := response.Code
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+
+		var expectedResult []data.Expense
+
+		err := json.Unmarshal(response.Body.Bytes(), &expectedResult)
+
+		if err != nil {
+			t.Fatalf("Unable to parse response into Expenses slice, %v", err)
+		}
+
+	})
+}
+
+func TestGetTotalExpenses(t *testing.T) {
+	t.Run("Test total expense price can be returned", func(t *testing.T) {
+
+		request, _ := http.NewRequest(http.MethodGet, "/expense/total", nil)
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initExpDBTest()
+
+		fh := handlers.FinanceNewServer(l)
+
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
+		request = request.WithContext(ctx)
+		fh.GetTotalExpense(response, request)
+
+		want := 200
+		got := response.Code
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+
+		expectedResult := 3200
+
+		returnedResult, err := strconv.Atoi(strings.TrimSpace(response.Body.String()))
+
+		if err != nil {
+			t.Fatalf("Unable to parse response into int, %v", err)
+		}
+
+		if expectedResult != returnedResult {
+			t.Errorf("Did not get expected expense total, exptected %d got %d", expectedResult, returnedResult)
+		}
+	})
+}
+func TestDeleteExpense(t *testing.T) {
+	t.Run("Test expense can be deleted", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodPut, "/expense/delete/1", nil)
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initExpDBTest()
+
+		fh := handlers.FinanceNewServer(l)
+
+		request.SetPathValue("id", "1")
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
+		request = request.WithContext(ctx)
+		fh.DeleteExpense(response, request)
+
+		expectedCode := 200
+
+		if response.Code != expectedCode {
+			t.Errorf("Did not successfully delete expense, got %d expected %d", response.Code, expectedCode)
+		}
+
+		// Test expense no longer exists
+		request, _ = http.NewRequest(http.MethodGet, "/expense/1", nil)
+		request.SetPathValue("id", "1")
+		ctx = context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
+		request = request.WithContext(ctx)
+
+		fh.GetExpense(response, request)
+
+		returnedError := strings.TrimSpace(response.Body.String())
+		expectedError := "Could not retrieve expense"
+
+		if returnedError != expectedError {
+			t.Errorf("Expected error %s, got %s", expectedError, returnedError)
+		}
+
+		expectedCode = 500
+		if response.Code != expectedCode {
+			t.Errorf("Expected %d, got %d", expectedCode, response.Code)
+		}
+	})
+
+}
+
+// Test middleware block requests with invalid ids
+// Further scenario tests in data/expenses_test.go
+func TestMiddleWareValidation(t *testing.T) {
+	t.Run("Test invalid expense is rejected", func(t *testing.T) {
+		testExpense := data.Expense{
+			Name:  "",
+			Price: -1000,
+		}
+
+		expense, err := json.Marshal(&testExpense)
+
+		if err != nil {
+			t.Fatalf("Unable to parse expense, %v", err)
+		}
+
+		f1 := func(rrw http.ResponseWriter, r *http.Request) {
+
+		}
+
+		request, _ := http.NewRequest(http.MethodPut, "/expense", bytes.NewReader(expense))
+
+		l := slog.Default()
+		initExpDBTest()
+
+		fh := handlers.FinanceNewServer(l)
+		rsp := fh.MiddleWareValidateExpense(http.HandlerFunc(f1))
+
+		response := httptest.NewRecorder()
+		rsp.ServeHTTP(response, request)
+
+		expectedCode := 400
+
+		if response.Code != expectedCode {
+			t.Errorf("Expected %d, got %d", expectedCode, response.Code)
+		}
+
+	})
+}
+
+//func TestExpenseContextIsPassed(t *testing.T) {
+// 	t.Run("Test ")
+// }
