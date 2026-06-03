@@ -53,6 +53,7 @@ func (f *financeServer) GetExpenses(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		f.l.Error("Error getting expenses", "error", err)
 		http.Error(rw, "Unable to retive expenses", http.StatusInternalServerError)
+		return
 	}
 	rw.Write(resp)
 
@@ -67,6 +68,7 @@ func (f *financeServer) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		f.l.Error("Error getting id from path value", "error", err)
 		http.Error(rw, "Invalid request", http.StatusBadRequest)
+		return
 	}
 
 	// Get expense from database via id
@@ -74,6 +76,7 @@ func (f *financeServer) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		f.l.Error("Error retrieving expense", "error", err)
 		http.Error(rw, "Could not retrieve expense", http.StatusInternalServerError)
+		return
 	}
 
 	// convert expense into byte slice
@@ -81,6 +84,7 @@ func (f *financeServer) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		f.l.Error("Error getting expenses", "error", err)
 		http.Error(rw, "Unable to retive expenses", http.StatusInternalServerError)
+		return
 	}
 	rw.Write(resp)
 

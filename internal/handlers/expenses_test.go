@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	env_config "github.com/jjma22/finance-tracker/internal/config"
@@ -106,5 +107,166 @@ func TestGetExpenseReturnsExpense(t *testing.T) {
 		if expense.SKU != expectedExpense.SKU {
 			t.Errorf("Failed to return correct expense SKU; got %s, expected %s", expense.SKU, expectedExpense.SKU)
 		}
+	})
+}
+
+func TestGetExpenseCannotGetUndefinedExpense(t *testing.T) {
+	t.Run("Testing get expense fails when expense id does not exist", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/expense/2", nil)
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initExpDBTest()
+
+		fh := handlers.FinanceNewServer(l)
+
+		request.SetPathValue("id", "2")
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
+		request = request.WithContext(ctx)
+
+		fh.GetExpense(response, request)
+
+		returnedError := strings.TrimSpace(response.Body.String())
+		expectedError := "Could not retrieve expense"
+
+		if returnedError != expectedError {
+			t.Errorf("Expected error %s, got %s", expectedError, returnedError)
+		}
+
+		expectedCode := 500
+		if response.Code != expectedCode {
+			t.Errorf("Expected %d, got %d", expectedCode, response.Code)
+		}
+
+	})
+}
+
+func TestPutExpense(t *testing.T) {
+	t.Run("Test expense price can be updated", func(t *testing.T) {
+		newExpense := data.Expense{
+			Price: 2200,
+		}
+
+		exp, err := json.Marshal(newExpense)
+		if err != nil {
+			t.Fatalf("Unable to parse updated expense into JSON, %v", err)
+		}
+
+		request, _ := http.NewRequest(http.MethodPut, "/expense/1", bytes.NewReader(exp))
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initExpDBTest()
+
+		fh := handlers.FinanceNewServer(l)
+
+		request.SetPathValue("id", "1")
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
+		request = request.WithContext(ctx)
+		fh.UpdateExpense(response, request)
+
+		expectedCode := 200
+
+		if response.Code != expectedCode {
+			t.Errorf("Expected %d, got %d", expectedCode, response.Code)
+		}
+
+		request, _ = http.NewRequest(http.MethodGet, "/expense/1", nil)
+		request.SetPathValue("id", "1")
+		ctx = context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
+		request = request.WithContext(ctx)
+
+		fh.GetExpense(response, request)
+
+		expectedCode = 200
+
+		if response.Code != expectedCode {
+			t.Errorf("Expected %d, got %d", expectedCode, response.Code)
+		}
+
+		var updatedExpense data.Expense
+
+		err = json.Unmarshal(response.Body.Bytes(), &updatedExpense)
+		if err != nil {
+			t.Fatalf("Unable to parse expense returned from server, err: %v", err)
+		}
+
+		expectedExpense := data.Expense{
+			Name:  "Rent",
+			Price: 2200,
+		}
+
+		if expectedExpense.Name != updatedExpense.Name {
+			t.Errorf("Expense name unexpectadly updated. Expected %s, got %s", updatedExpense.Name, expectedExpense.Name)
+		}
+
+		if expectedExpense.Price != updatedExpense.Price {
+			t.Errorf("Expense price not update. Got %f, expected %f", updatedExpense.Price, expectedExpense.Price)
+		}
+
+	})
+
+	t.Run("Test expense name can be updated", func(t *testing.T) {
+		newExpense := data.Expense{
+			Name: "UpdatedRent",
+		}
+
+		exp, err := json.Marshal(newExpense)
+		if err != nil {
+			t.Fatalf("Unable to parse updated expense into JSON, %v", err)
+		}
+
+		request, _ := http.NewRequest(http.MethodPut, "/expense/1", bytes.NewReader(exp))
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initExpDBTest()
+
+		fh := handlers.FinanceNewServer(l)
+
+		request.SetPathValue("id", "1")
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
+		request = request.WithContext(ctx)
+		fh.UpdateExpense(response, request)
+
+		expectedCode := 200
+
+		if response.Code != expectedCode {
+			t.Errorf("Expected %d, got %d", expectedCode, response.Code)
+		}
+
+		request, _ = http.NewRequest(http.MethodGet, "/expense/1", nil)
+		request.SetPathValue("id", "1")
+		ctx = context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
+		request = request.WithContext(ctx)
+
+		fh.GetExpense(response, request)
+
+		expectedCode = 200
+
+		if response.Code != expectedCode {
+			t.Errorf("Expected %d, got %d", expectedCode, response.Code)
+		}
+
+		var updatedExpense data.Expense
+
+		err = json.Unmarshal(response.Body.Bytes(), &updatedExpense)
+		if err != nil {
+			t.Fatalf("Unable to parse expense returned from server, err: %v", err)
+		}
+
+		expectedExpense := data.Expense{
+			Name:  "UpdatedRent",
+			Price: 2200,
+		}
+
+		if expectedExpense.Name != updatedExpense.Name {
+			t.Errorf("Expense name unexpectadly updated. Expected %s, got %s", updatedExpense.Name, expectedExpense.Name)
+		}
+
+		if expectedExpense.Price != updatedExpense.Price {
+			t.Errorf("Expense price not update. Got %f, expected %f", updatedExpense.Price, expectedExpense.Price)
+		}
+
 	})
 }

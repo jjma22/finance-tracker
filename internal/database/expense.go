@@ -94,6 +94,16 @@ func GetExpenses(uuid string) (*data.Expenses, error) {
 
 func GetExpense(id int, uuid string) (*data.Expense, error) {
 
+	idExists, err := CheckExpenseExists(id, uuid)
+
+	if err != nil {
+		return nil, err
+	}
+	// Error if expense to update is not found
+	if idExists == false {
+		return nil, errors.New("Invalid ID")
+	}
+
 	DB.l.Info("Getting id: %d expenses from database", id)
 	// Runs query on database
 	row, err := DB.pool.Query(context.Background(), "SELECT * FROM expenses WHERE id = $1 AND uuid = $2", id, uuid)
@@ -157,28 +167,44 @@ func DeleteExpense(id int, uuid string) (int, error) {
 
 }
 
-func UpdateExpense(e *data.Expense, uuid string) error {
+func CheckExpenseExists(id int, uuid string) (bool, error) {
 	// search fields to check if id exists
-	row, err := DB.pool.Query(context.Background(), "SELECT id FROM expenses WHERE id = $1 AND uuid = $2", e.ID, uuid)
+	row, err := DB.pool.Query(context.Background(), "SELECT id FROM expenses WHERE id = $1 AND uuid = $2", id, uuid)
 	if err != nil {
 		DB.l.Error("Failed querying database", "error", err)
-		return err
+		return false, err
 	}
 
 	// Parse ids into slice
 	i, err := pgx.CollectRows(row, pgx.RowTo[int])
 	if err != nil {
 		DB.l.Error("Failed querying row", "error", err)
-		return err
+		return false, err
 	}
 
-	// Error if expense to update is not found
+	// Return false if expense to update is not found
 	if len(i) == 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
+func UpdateExpense(e *data.Expense, uuid string) error {
+
+	id := e.ID
+
+	idExists, err := CheckExpenseExists(id, uuid)
+
+	if err != nil {
+		return err
+	}
+	// Error if expense to update is not found
+	if idExists == false {
 		return errors.New("Invalid ID")
 	}
 
 	// Convert id into string id to be used in db querys
-	sId := strconv.Itoa(i[0])
+	sId := strconv.Itoa(id)
 
 	// Update price of expense if value is not 0 / nil
 	if e.Price != 0 {
