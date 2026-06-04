@@ -62,4 +62,4 @@ ADD COLUMN uuid VARCHAR(255) NOT NULL
 
 -- Add uuid on expenses
 ALTER TABLE expenses
-ADD COLUMN uuid C
+ADD COLUMN uuid VARCHAR(255) NOT NULL
