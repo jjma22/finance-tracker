@@ -8,7 +8,7 @@ Finance Tracker is a backend service that allows users to:
 - Set and manage monthly budgets
 - Track expenses
 - View expense totals and summaries
-- Create accounts and authenticate securely - currently in development in feat/auth branch
+- Create accounts and authenticate securely using JWT
 ## Project Structure
 
 ```
@@ -17,7 +17,7 @@ finance-tracker/
 │   └── finance-api/         # Application entry point
 │       └── main.go
 ├── internal/
-│   ├── auth/                # Authentication logic - feat/auth branch
+│   ├── auth/                # Authentication logic
 │   │   └── auth.go
 │   ├── config/              # Configuration management
 │   │   └── env.go
