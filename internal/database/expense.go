@@ -104,7 +104,7 @@ func GetExpense(id int, uuid string) (*data.Expense, error) {
 		return nil, errors.New("Invalid ID")
 	}
 
-	DB.l.Info("Getting id: %d expenses from database", id)
+	DB.l.Info("Getting expense from database", "id", id)
 	// Runs query on database
 	row, err := DB.pool.Query(context.Background(), "SELECT * FROM expenses WHERE id = $1 AND uuid = $2", id, uuid)
 	if err != nil {
