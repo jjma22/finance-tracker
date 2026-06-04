@@ -26,6 +26,12 @@ func FinanceNewServer(l *slog.Logger) *financeServer {
 	return &financeServer{l, validator.New()}
 }
 
+// Function to take uuid from request Context
+func GetUuidFromRequest(r *http.Request) string {
+	uuid := r.Context().Value(UserKey{}).(string)
+	return uuid
+}
+
 // Function on the financeserver to convert request body to Expense
 func (f *financeServer) ExpenseFromJSON(r *http.Request) (error, *data.Expense) {
 	var e data.Expense
@@ -42,11 +48,12 @@ func (f *financeServer) ExpenseFromJSON(r *http.Request) (error, *data.Expense) 
 // Handler to return all expenses
 func (f *financeServer) GetExpenses(rw http.ResponseWriter, r *http.Request) {
 	f.l.Info("Getting expenses")
-	ge, err := database.GetExpenses()
+	ge, err := database.GetExpenses(GetUuidFromRequest(r))
 	resp, err := json.Marshal(ge)
 	if err != nil {
 		f.l.Error("Error getting expenses", "error", err)
 		http.Error(rw, "Unable to retive expenses", http.StatusInternalServerError)
+		return
 	}
 	rw.Write(resp)
 
@@ -61,13 +68,15 @@ func (f *financeServer) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		f.l.Error("Error getting id from path value", "error", err)
 		http.Error(rw, "Invalid request", http.StatusBadRequest)
+		return
 	}
 
 	// Get expense from database via id
-	exp, err := database.GetExpense(id)
+	exp, err := database.GetExpense(id, GetUuidFromRequest(r))
 	if err != nil {
 		f.l.Error("Error retrieving expense", "error", err)
 		http.Error(rw, "Could not retrieve expense", http.StatusInternalServerError)
+		return
 	}
 
 	// convert expense into byte slice
@@ -75,6 +84,7 @@ func (f *financeServer) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		f.l.Error("Error getting expenses", "error", err)
 		http.Error(rw, "Unable to retive expenses", http.StatusInternalServerError)
+		return
 	}
 	rw.Write(resp)
 
@@ -93,7 +103,7 @@ func (f *financeServer) AddExpense(rw http.ResponseWriter, r *http.Request) {
 	e.LastUpdate = time.Now().Truncate(time.Second)
 
 	// Add expense into db
-	err := database.AddExpense(e)
+	err := database.AddExpense(e, GetUuidFromRequest(r))
 
 	if err != nil {
 		f.l.Error("Error adding expense", "error", err)
@@ -118,7 +128,7 @@ func (f *financeServer) UpdateExpense(rw http.ResponseWriter, r *http.Request) {
 	exp.ID, _ = strconv.Atoi(r.PathValue("id"))
 
 	// Update expense in db
-	err = database.UpdateExpense(exp)
+	err = database.UpdateExpense(exp, GetUuidFromRequest(r))
 	if err != nil {
 		f.l.Error(err.Error())
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -134,7 +144,7 @@ func (f *financeServer) DeleteExpense(rw http.ResponseWriter, r *http.Request) {
 
 	// DB query to delete expeense
 	// if no rows are changed, rows = 0
-	rows, err := database.DeleteExpense(ID)
+	rows, err := database.DeleteExpense(ID, GetUuidFromRequest(r))
 	if err != nil {
 		f.l.Error(err.Error())
 		http.Error(rw, "Failed to delete expense", http.StatusInternalServerError)
@@ -152,7 +162,7 @@ func (f *financeServer) DeleteExpense(rw http.ResponseWriter, r *http.Request) {
 func (f *financeServer) GetTotalExpense(rw http.ResponseWriter, r *http.Request) {
 	f.l.Info("Getting total expenses")
 
-	t, err := database.GetTotal()
+	t, err := database.GetTotal(GetUuidFromRequest(r))
 	if err != nil {
 		f.l.Error("Error getting total expenses")
 		http.Error(rw, "Errror getting total expenses", http.StatusInternalServerError)

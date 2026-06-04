@@ -12,11 +12,11 @@ import (
 	"github.com/jjma22/finance-tracker/internal/data"
 )
 
-func GetTotal() (float32, error) {
+func GetTotal(uuid string) (float32, error) {
 
 	DB.l.Info("Getting total expenses from database")
 	// Runs query on database
-	rows, err := DB.pool.Query(context.Background(), "select price from expenses")
+	rows, err := DB.pool.Query(context.Background(), "SELECT price FROM expenses WHERE uuid = $1", uuid)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
@@ -55,13 +55,14 @@ type tempExpense struct {
 	SKU        string     `json:"sku" validate:"required,sku"`
 	DateAdded  *time.Time `json:"-"`
 	LastUpdate *time.Time `json:"-"`
+	Uuid       string     `json:"uuid"`
 }
 
 // Fucntion to return all expenses from database
-func GetExpenses() (*data.Expenses, error) {
+func GetExpenses(uuid string) (*data.Expenses, error) {
 	DB.l.Info("Getting all expenses from database")
 	// Get all ids from expense
-	rows, err := DB.pool.Query(context.Background(), "select id from expenses")
+	rows, err := DB.pool.Query(context.Background(), "SELECT id FROM expenses WHERE uuid = $1", uuid)
 	if err != nil {
 		DB.l.Error("Failed querying database", "error", err)
 		return nil, err
@@ -78,7 +79,7 @@ func GetExpenses() (*data.Expenses, error) {
 
 	// Add expense into expenses for each id
 	for _, id := range r {
-		e, err := GetExpense(id)
+		e, err := GetExpense(id, uuid)
 
 		if err != nil {
 			return nil, err
@@ -91,21 +92,33 @@ func GetExpenses() (*data.Expenses, error) {
 	return &expenses, nil
 }
 
-func GetExpense(id int) (*data.Expense, error) {
+func GetExpense(id int, uuid string) (*data.Expense, error) {
 
-	DB.l.Info("Getting (id - needs adding) expenses from database")
+	idExists, err := CheckExpenseExists(id, uuid)
+
+	if err != nil {
+		return nil, err
+	}
+	// Error if expense to update is not found
+	if idExists == false {
+		return nil, errors.New("Invalid ID")
+	}
+
+	DB.l.Info("Getting expense from database", "id", id)
 	// Runs query on database
-	row, err := DB.pool.Query(context.Background(), "select * from expenses where id = $1", id)
+	row, err := DB.pool.Query(context.Background(), "SELECT * FROM expenses WHERE id = $1 AND uuid = $2", id, uuid)
 	if err != nil {
 		DB.l.Error("Failed querying database", "error", err)
 		return nil, err
 	}
 
+	// Parse rows in struct
 	exp, err := pgx.CollectRows(row, pgx.RowToStructByName[tempExpense])
 	if err != nil {
 		DB.l.Error("Failed querying row", "error", err)
 		return nil, err
 	}
+
 	// Prevents kernel error if last update or date added is nil
 	if exp[0].DateAdded == nil {
 		DB.l.Info("Setting DateAdded to nil")
@@ -116,6 +129,7 @@ func GetExpense(id int) (*data.Expense, error) {
 		exp[0].LastUpdate = exp[0].DateAdded
 	}
 
+	// return expense
 	return &data.Expense{
 		ID:         exp[0].ID,
 		Name:       exp[0].Name,
@@ -126,9 +140,9 @@ func GetExpense(id int) (*data.Expense, error) {
 	}, nil
 }
 
-func AddExpense(e *data.Expense) error {
-	_, err := DB.pool.Exec(context.Background(), "INSERT INTO expenses (name, price, sku, dateadded,lastupdate) Values ($1, $2, $3, $4, $5)",
-		e.Name, e.Price, e.SKU, e.DateAdded, e.LastUpdate)
+func AddExpense(e *data.Expense, uuid string) error {
+	_, err := DB.pool.Exec(context.Background(), "INSERT INTO expenses (name, price, sku, dateadded,lastupdate, uuid) Values ($1, $2, $3, $4, $5, $6)",
+		e.Name, e.Price, e.SKU, e.DateAdded, e.LastUpdate, uuid)
 
 	if err != nil {
 		return err
@@ -137,9 +151,9 @@ func AddExpense(e *data.Expense) error {
 
 }
 
-func DeleteExpense(id int) (int, error) {
-	ct, err := DB.pool.Exec(context.Background(), "DELETE FROM expenses WHERE id = $1",
-		id)
+func DeleteExpense(id int, uuid string) (int, error) {
+	ct, err := DB.pool.Exec(context.Background(), "DELETE FROM expenses WHERE id = $1 AND uuid = $2",
+		id, uuid)
 	if err != nil {
 		return 1, err
 	}
@@ -153,33 +167,53 @@ func DeleteExpense(id int) (int, error) {
 
 }
 
-func UpdateExpense(e *data.Expense) error {
+func CheckExpenseExists(id int, uuid string) (bool, error) {
 	// search fields to check if id exists
-	row, err := DB.pool.Query(context.Background(), "select id from expenses where id = $1", e.ID)
+	row, err := DB.pool.Query(context.Background(), "SELECT id FROM expenses WHERE id = $1 AND uuid = $2", id, uuid)
 	if err != nil {
 		DB.l.Error("Failed querying database", "error", err)
-		return err
+		return false, err
 	}
 
+	// Parse ids into slice
 	i, err := pgx.CollectRows(row, pgx.RowTo[int])
 	if err != nil {
 		DB.l.Error("Failed querying row", "error", err)
-		return err
+		return false, err
 	}
 
+	// Return false if expense to update is not found
 	if len(i) == 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
+func UpdateExpense(e *data.Expense, uuid string) error {
+
+	id := e.ID
+
+	idExists, err := CheckExpenseExists(id, uuid)
+
+	if err != nil {
+		return err
+	}
+	// Error if expense to update is not found
+	if idExists == false {
 		return errors.New("Invalid ID")
 	}
 
-	sId := strconv.Itoa(i[0])
+	// Convert id into string id to be used in db querys
+	sId := strconv.Itoa(id)
 
+	// Update price of expense if value is not 0 / nil
 	if e.Price != 0 {
 		// Need to add validation for prices (not minus number, not string)
 		lastUpdate := time.Now().Truncate(time.Second)
 		DB.l.Info("Updating price for expense", "id", sId)
 		u, err := DB.pool.Exec(context.Background(),
-			"UPDATE expenses SET price = $1, lastupdate = $2  WHERE id = $3",
-			e.Price, lastUpdate, sId)
+			"UPDATE expenses SET price = $1, lastupdate = $2  WHERE id = $3 AND uuid = $4",
+			e.Price, lastUpdate, sId, uuid)
 
 		if err != nil {
 			return err
@@ -192,13 +226,14 @@ func UpdateExpense(e *data.Expense) error {
 
 	}
 
+	// Update name of expense if value is not "" / nil
 	if e.Name != "" {
 		// Need to add validation for Name (not minus number, not string)
 		lastUpdate := time.Now().Truncate(time.Second)
 		DB.l.Info("Updating name for expense", "id", sId)
 		u, err := DB.pool.Exec(context.Background(),
-			"UPDATE expenses SET name = $1, lastupdate = $2  WHERE id = $3",
-			e.Name, lastUpdate, sId)
+			"UPDATE expenses SET name = $1, lastupdate = $2  WHERE id = $3 AND uuid = $4",
+			e.Name, lastUpdate, sId, uuid)
 
 		if err != nil {
 			return err
