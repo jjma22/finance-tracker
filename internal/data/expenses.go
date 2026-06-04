@@ -21,6 +21,7 @@ type Expenses []*Expense
 
 func (e *Expense) Validate() error {
 	validate := validator.New()
+	// func validareSKU on Expense.SKU
 	validate.RegisterValidation("sku", validateSKU)
 	return validate.Struct(e)
 
@@ -30,10 +31,12 @@ func validateSKU(fl validator.FieldLevel) bool {
 	re := regexp.MustCompile(`[a-z]+-[a-z]+-[a-z]+`)
 	matches := re.FindAllString(fl.Field().String(), -1)
 
+	// Fails if there are no matches to regex string
 	if len(matches) != 1 {
 		return false
 	}
 
+	// Checks if sku field is string
 	if fl.Field().String() == "invalid" {
 		return false
 	}

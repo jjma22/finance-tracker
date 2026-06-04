@@ -456,6 +456,49 @@ func TestMiddleWareValidation(t *testing.T) {
 	})
 }
 
-//func TestExpenseContextIsPassed(t *testing.T) {
-// 	t.Run("Test ")
-// }
+// Test to check whether expense added to context in middleware is successfully passed to the next function
+func TestExpenseContextIsPassed(t *testing.T) {
+	t.Run("Test context is passed to next function", func(t *testing.T) {
+
+		testExpense := data.Expense{
+			Name:  "test",
+			Price: 1000,
+			SKU:   "abc-cde-fgb",
+		}
+
+		expense, err := json.Marshal(&testExpense)
+		if err != nil {
+			t.Errorf("Unable to parse expense, %v", err)
+		}
+		request, _ := http.NewRequest(http.MethodPost, "/expense", bytes.NewReader(expense))
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initExpDBTest()
+
+		f1 := func(rw http.ResponseWriter, r *http.Request) {
+			e := r.Context().Value(handlers.Keyexpense{}).(*data.Expense)
+			if e.Name != testExpense.Name {
+				http.Error(rw, "Name not successfully passed in context", http.StatusNotFound)
+			}
+			if e.Price != testExpense.Price {
+				http.Error(rw, "Price not successfully passed in context", http.StatusNotFound)
+			}
+			if e.SKU != testExpense.SKU {
+				http.Error(rw, "SKU not successfully passed in context", http.StatusNotFound)
+			}
+			rw.Write([]byte("success"))
+		}
+
+		fh := handlers.FinanceNewServer(l)
+		rsp := fh.MiddleWareValidateExpense(http.HandlerFunc(f1))
+		rsp.ServeHTTP(response, request)
+
+		responseBody := response.Body.String()
+		expectedResponse := "success"
+		if responseBody != expectedResponse {
+			t.Errorf("Expected %s got %s", expectedResponse, responseBody)
+		}
+
+	})
+}
