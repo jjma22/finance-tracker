@@ -527,3 +527,238 @@ func TestCannotGetOtherUserBudget(t *testing.T) {
 	})
 
 }
+
+// Auth - expenses
+
+func TestCannotGetOtherUserExpense(t *testing.T) {
+	t.Run("Can cadd expense for second user", func(t *testing.T) {
+
+		user2Expense := &data.Expense{
+			Name:  "user2Expense",
+			Price: 800,
+			SKU:   "pok-mmm-bbb",
+		}
+
+		expense, err := json.Marshal(&user2Expense)
+		if err != nil {
+			t.Fatalf("Unable to parse expense, %v", err)
+		}
+		request, _ := http.NewRequest(http.MethodPost, "/expense", bytes.NewReader(expense))
+		response := httptest.NewRecorder()
+		ctx := context.WithValue(request.Context(), handlers.Keyexpense{}, user2Expense)
+
+		//Set userid in context for handlers
+		ctx = context.WithValue(ctx, handlers.UserKey{}, User2Claims["username"])
+
+		request = request.WithContext(ctx)
+
+		l := slog.Default()
+		initDBTestAuth()
+
+		fh := handlers.FinanceNewServer(l)
+		fh.AddExpense(response, request)
+
+		want := 201
+		got := response.Code
+
+		if got != want {
+			t.Errorf("got %d, want %d when adding budget for User2", got, want)
+		}
+	})
+
+	t.Run("Second user can get new expense", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/expense/1", nil)
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initDBTestAuth()
+		// Manualy inject path
+		request.SetPathValue("id", "1")
+		fh := handlers.FinanceNewServer(l)
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, User2Claims["username"])
+
+		request = request.WithContext(ctx)
+
+		fh.GetExpense(response, request)
+
+		var got data.Expense
+		err := json.NewDecoder(response.Body).Decode(&got)
+
+		if err != nil {
+			t.Fatalf("Unable to parse response from server %d into expense, '%v'", response.Body, err)
+		}
+		expectedExpense := data.Expense{
+			Name:  "user2Expense",
+			Price: 800,
+			SKU:   "pok-mmm-bbb",
+		}
+		if got.Name != expectedExpense.Name {
+			t.Errorf("Did not get expected name from expense, got %s, want %s", got.Name, expectedExpense.Name)
+		}
+		if got.Price != expectedExpense.Price {
+			t.Errorf("Did not get expected price from expense, got %f, want %f", got.Price, expectedExpense.Price)
+		}
+		if got.SKU != expectedExpense.SKU {
+			t.Errorf("Did not get expected SKU from expense, got %s, want %s", got.SKU, expectedExpense.SKU)
+		}
+	})
+
+	t.Run("Test user cannot get user2 expense", func(t *testing.T) {
+
+		l := slog.Default()
+		initDBTestAuth()
+
+		fh := handlers.FinanceNewServer(l)
+
+		request, _ := http.NewRequest(http.MethodGet, "/expense/1", nil)
+		response := httptest.NewRecorder()
+
+		// Manualy inject path
+		request.SetPathValue("id", "1")
+
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUserClaims["username"])
+
+		request = request.WithContext(ctx)
+
+		fh.GetExpense(response, request)
+
+		want := 500
+
+		if response.Code != want {
+			t.Errorf("got %d, want %d", response.Code, want)
+		}
+	})
+
+	t.Run("User can update expense", func(t *testing.T) {
+		updatedExpense, err := json.Marshal(&data.Expense{
+			Price: 1000,
+		})
+
+		if err != nil {
+			t.Fatalf("Unable to parse budget from client %d , '%v'", updatedExpense, err)
+		}
+		request, _ := http.NewRequest(http.MethodPost, "/expense/update/1", bytes.NewReader(updatedExpense))
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initDBTestAuth()
+		// Manualy inject path
+		request.SetPathValue("id", "1")
+		fh := handlers.FinanceNewServer(l)
+
+		uuid := User2Claims["username"]
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, uuid)
+
+		request = request.WithContext(ctx)
+		fh.UpdateExpense(response, request)
+
+		want := 200
+		got := response.Code
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+
+		// Check id 1 budget has updated
+		request, _ = http.NewRequest(http.MethodGet, "/expense/1", nil)
+		ctx = context.WithValue(request.Context(), handlers.UserKey{}, uuid)
+
+		request = request.WithContext(ctx)
+		// Manualy inject path
+		request.SetPathValue("id", "1")
+		fh.GetExpense(response, request)
+
+		var gotExpense data.Expense
+		err = json.NewDecoder(response.Body).Decode(&gotExpense)
+
+		if err != nil {
+			t.Fatalf("Unable to parse response from server %d into budget, '%v'", response.Body, err)
+		}
+		returnedPrice := float32(1000)
+
+		if gotExpense.Price != returnedPrice {
+			t.Errorf("got %f, want %f", gotExpense.Price, returnedPrice)
+		}
+	})
+	t.Run("User cannot update other users expense", func(t *testing.T) {
+		updatedExpense, err := json.Marshal(&data.Expense{
+			Price: 1000,
+		})
+
+		if err != nil {
+			t.Fatalf("Unable to parse budget from client %d , '%v'", updatedExpense, err)
+		}
+		request, _ := http.NewRequest(http.MethodPost, "/expense/update/1", bytes.NewReader(updatedExpense))
+		response := httptest.NewRecorder()
+
+		l := slog.Default()
+		initDBTestAuth()
+		// Manualy inject path
+		request.SetPathValue("id", "1")
+		fh := handlers.FinanceNewServer(l)
+
+		uuid := TestUserClaims["username"]
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, uuid)
+
+		request = request.WithContext(ctx)
+		fh.UpdateExpense(response, request)
+
+		want := 500
+		got := response.Code
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+
+	})
+	t.Run("Test user cannot delete user2 expense", func(t *testing.T) {
+
+		l := slog.Default()
+		initDBTestAuth()
+
+		fh := handlers.FinanceNewServer(l)
+
+		request, _ := http.NewRequest(http.MethodDelete, "/expense/delete/1", nil)
+		response := httptest.NewRecorder()
+
+		// Manualy inject path
+
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUserClaims["username"])
+
+		request = request.WithContext(ctx)
+		request.SetPathValue("id", "1")
+
+		fh.DeleteExpense(response, request)
+
+		want := 404
+
+		if response.Code != want {
+			t.Errorf("got %d, want %d", response.Code, want)
+		}
+	})
+
+	t.Run("user 2 can delete expense", func(t *testing.T) {
+
+		l := slog.Default()
+		initDBTestAuth()
+
+		fh := handlers.FinanceNewServer(l)
+
+		request, _ := http.NewRequest(http.MethodDelete, "/expense/delete/1", nil)
+		response := httptest.NewRecorder()
+
+		// Manualy inject path
+
+		ctx := context.WithValue(request.Context(), handlers.UserKey{}, User2Claims["username"])
+
+		request = request.WithContext(ctx)
+		request.SetPathValue("id", "1")
+
+		fh.DeleteExpense(response, request)
+
+		want := 200
+
+		if response.Code != want {
+			t.Errorf("got %d, want %d", response.Code, want)
+		}
+	})
+
+}

@@ -70,7 +70,7 @@ func TestPostExpenseSuccess(t *testing.T) {
 
 func TestGetExpenseReturnsExpense(t *testing.T) {
 	t.Run("Get Expense returns expense successfully", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodGet, "/expense/1", nil)
+		request, _ := http.NewRequest(http.MethodGet, "/expense/2", nil)
 		response := httptest.NewRecorder()
 
 		l := slog.Default()
@@ -78,7 +78,7 @@ func TestGetExpenseReturnsExpense(t *testing.T) {
 
 		fh := handlers.FinanceNewServer(l)
 
-		request.SetPathValue("id", "1")
+		request.SetPathValue("id", "2")
 		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
 		request = request.WithContext(ctx)
 
@@ -113,7 +113,7 @@ func TestGetExpenseReturnsExpense(t *testing.T) {
 
 func TestGetExpenseCannotGetUndefinedExpense(t *testing.T) {
 	t.Run("Testing get expense fails when expense id does not exist", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodGet, "/expense/2", nil)
+		request, _ := http.NewRequest(http.MethodGet, "/expense/3", nil)
 		response := httptest.NewRecorder()
 
 		l := slog.Default()
@@ -121,7 +121,7 @@ func TestGetExpenseCannotGetUndefinedExpense(t *testing.T) {
 
 		fh := handlers.FinanceNewServer(l)
 
-		request.SetPathValue("id", "2")
+		request.SetPathValue("id", "3")
 		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
 		request = request.WithContext(ctx)
 
@@ -153,7 +153,7 @@ func TestPutExpense(t *testing.T) {
 			t.Fatalf("Unable to parse updated expense into JSON, %v", err)
 		}
 
-		request, _ := http.NewRequest(http.MethodPut, "/expense/1", bytes.NewReader(exp))
+		request, _ := http.NewRequest(http.MethodPut, "/expense/2", bytes.NewReader(exp))
 		response := httptest.NewRecorder()
 
 		l := slog.Default()
@@ -161,7 +161,7 @@ func TestPutExpense(t *testing.T) {
 
 		fh := handlers.FinanceNewServer(l)
 
-		request.SetPathValue("id", "1")
+		request.SetPathValue("id", "2")
 		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
 		request = request.WithContext(ctx)
 		fh.UpdateExpense(response, request)
@@ -172,8 +172,8 @@ func TestPutExpense(t *testing.T) {
 			t.Errorf("Expected %d, got %d", expectedCode, response.Code)
 		}
 
-		request, _ = http.NewRequest(http.MethodGet, "/expense/1", nil)
-		request.SetPathValue("id", "1")
+		request, _ = http.NewRequest(http.MethodGet, "/expense/2", nil)
+		request.SetPathValue("id", "2")
 		ctx = context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
 		request = request.WithContext(ctx)
 
@@ -217,7 +217,7 @@ func TestPutExpense(t *testing.T) {
 			t.Fatalf("Unable to parse updated expense into JSON, %v", err)
 		}
 
-		request, _ := http.NewRequest(http.MethodPut, "/expense/1", bytes.NewReader(exp))
+		request, _ := http.NewRequest(http.MethodPut, "/expense/2", bytes.NewReader(exp))
 		response := httptest.NewRecorder()
 
 		l := slog.Default()
@@ -225,7 +225,7 @@ func TestPutExpense(t *testing.T) {
 
 		fh := handlers.FinanceNewServer(l)
 
-		request.SetPathValue("id", "1")
+		request.SetPathValue("id", "2")
 		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
 		request = request.WithContext(ctx)
 		fh.UpdateExpense(response, request)
@@ -236,8 +236,8 @@ func TestPutExpense(t *testing.T) {
 			t.Errorf("Expected %d, got %d", expectedCode, response.Code)
 		}
 
-		request, _ = http.NewRequest(http.MethodGet, "/expense/update/1", nil)
-		request.SetPathValue("id", "1")
+		request, _ = http.NewRequest(http.MethodGet, "/expense/update/2", nil)
+		request.SetPathValue("id", "2")
 		ctx = context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
 		request = request.WithContext(ctx)
 
@@ -375,7 +375,7 @@ func TestGetTotalExpenses(t *testing.T) {
 }
 func TestDeleteExpense(t *testing.T) {
 	t.Run("Test expense can be deleted", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodPut, "/expense/delete/1", nil)
+		request, _ := http.NewRequest(http.MethodPut, "/expense/delete/2", nil)
 		response := httptest.NewRecorder()
 
 		l := slog.Default()
@@ -383,7 +383,7 @@ func TestDeleteExpense(t *testing.T) {
 
 		fh := handlers.FinanceNewServer(l)
 
-		request.SetPathValue("id", "1")
+		request.SetPathValue("id", "2")
 		ctx := context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
 		request = request.WithContext(ctx)
 		fh.DeleteExpense(response, request)
@@ -395,8 +395,8 @@ func TestDeleteExpense(t *testing.T) {
 		}
 
 		// Test expense no longer exists
-		request, _ = http.NewRequest(http.MethodGet, "/expense/1", nil)
-		request.SetPathValue("id", "1")
+		request, _ = http.NewRequest(http.MethodGet, "/expense/2", nil)
+		request.SetPathValue("id", "2")
 		ctx = context.WithValue(request.Context(), handlers.UserKey{}, TestUuid)
 		request = request.WithContext(ctx)
 
