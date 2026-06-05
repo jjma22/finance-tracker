@@ -69,5 +69,5 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      name: Run go tests
+    - name: Run go tests
       run: go test -v ./...
