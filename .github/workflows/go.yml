@@ -65,7 +65,9 @@ jobs:
         ACTIONS_DB_name: ${{ secrets.DB_NAME }}
 
   test:
-    - name: Test
-      needs: build
-      runs-on: ubuntu-latest
+    name: Test
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      name: Run go tests
       run: go test -v ./...
