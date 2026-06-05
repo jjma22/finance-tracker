@@ -30,7 +30,7 @@ var TestUserClaims jwt.MapClaims
 
 // Want to create shared function for all handlers
 func initDBTestAuth() {
-	Config := *env_config.LoadConfig("../../.env")
+	Config := *env_config.LoadConfig()
 
 	db_connection := Config.Database
 

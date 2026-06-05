@@ -21,7 +21,7 @@ import (
 // Using https://quii.gitbook.io/learn-go-with-tests/build-an-application/http-server as source
 
 func initDBTest() {
-	Config := *env_config.LoadConfig("../../.env")
+	Config := *env_config.LoadConfig()
 
 	db_connection := Config.Database
 

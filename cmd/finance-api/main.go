@@ -16,7 +16,7 @@ import (
 
 func main() {
 
-	Config := *env_config.LoadConfig("./.env")
+	Config := *env_config.LoadConfig()
 
 	db_connection := Config.Database
 
@@ -50,7 +50,7 @@ func main() {
 	sm.Handle("DELETE /expense/delete/{id}", fh.MiddleWareValidateAuthentication(http.HandlerFunc(fh.DeleteExpense)))
 
 	//Remove 127.0.0.1 when deploying to Docker, causes issues on local firewall without
-	serverPort := "127.0.0.1:9090"
+	serverPort := ":" + Config.Main.Port
 
 	// Initialise server
 	s := &http.Server{
