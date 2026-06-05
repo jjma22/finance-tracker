@@ -65,7 +65,7 @@ jobs:
         ACTIONS_DB_name: ${{ secrets.DB_NAME }}
 
     - name: Run go tests
-      run: go test -v ./...env
+      run: go test -v ./...
       env:
         Port: ${{ secrets.PORT }}
         DB_host: ${{ secrets.DB_HOST }}
