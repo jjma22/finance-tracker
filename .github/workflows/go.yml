@@ -65,7 +65,15 @@ jobs:
         ACTIONS_DB_name: ${{ secrets.DB_NAME }}
 
     - name: Run go tests
-      run: go test -v ./...
+      run: go test -v ./...env
+      env:
+        Port: ${{ secrets.PORT }}
+        DB_host: ${{ secrets.DB_HOST }}
+        DB_port: ${{ secrets.DB_PORT }}
+        DB_user: ${{ secrets.DB_USER }}
+        DB_pw: ${{ secrets.DB_PASSWORD }}
+        DB_name: ${{ secrets.DB_NAME }}
+        Jwtkey: ${{ secrets.JWTKEY }}
 
 
   docker:
