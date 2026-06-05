@@ -18,7 +18,7 @@ import (
 )
 
 func initExpDBTest() {
-	Config := *env_config.LoadConfig("../../.env")
+	Config := *env_config.LoadConfig()
 
 	db_connection := Config.Database
 
